@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using StakeholdersService.Domain.RepositoryInterfaces;
-using StakeholdersService.UseCases;
+using StakeholdersService.Services;
 using FluentResults;
 using StakeholdersService.DTO;
 using StakeholdersService.Common;
@@ -25,7 +25,7 @@ namespace StakeholdersService.Services
             var user = _userRepository.GetActiveByName(credentials.Username);
             if (user == null || credentials.Password != user.Password) return Result.Fail(FailureCode.NotFound);
 
-            return _tokenGenerator.GenerateAccessToken(user, user.Id);
+            return _tokenGenerator.GenerateAccessToken(user);
         }
 
         public Result<AuthenticationTokensDto> RegisterUser(AccountRegistrationDto account)
@@ -37,12 +37,11 @@ namespace StakeholdersService.Services
                 var user = _userRepository.Create(new User(account.Username, account.Password, account.Email, account.UserRole));
              
 
-                return _tokenGenerator.GenerateAccessToken(user, user.Id);
+                return _tokenGenerator.GenerateAccessToken(user);
             }
             catch (ArgumentException e)
             {
                 return Result.Fail(FailureCode.InvalidArgument).WithError(e.Message);
-                // There is a subtle issue here. Can you find it?
             }
         }
 

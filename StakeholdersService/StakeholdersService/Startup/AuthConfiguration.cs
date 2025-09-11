@@ -52,11 +52,9 @@ public static class AuthConfiguration
     {
         services.AddAuthorization(options =>
         {
-            options.AddPolicy("administratorPolicy", policy => policy.RequireRole("administrator"));
-            options.AddPolicy("authorPolicy", policy => policy.RequireRole("author"));
-            options.AddPolicy("touristPolicy", policy => policy.RequireRole("tourist"));
-            options.AddPolicy("touristOrAuthorPolicy", policy => policy.RequireRole("tourist", "author"));
-            options.AddPolicy("allLoggedPolicy", policy => policy.RequireRole("administrator", "tourist", "author"));
+            options.AddPolicy("administratorPolicy", policy => policy.RequireRole("Administrator"));
+            options.AddPolicy("authorPolicy", policy => policy.RequireRole("Author"));
+            options.AddPolicy("touristPolicy", policy => policy.RequireRole("Tourist"));
         });
     }
 }

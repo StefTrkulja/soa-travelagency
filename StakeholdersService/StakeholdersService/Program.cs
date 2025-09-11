@@ -5,7 +5,7 @@ using StakeholdersService.Domain.RepositoryInterfaces;
 using StakeholdersService.Repositories;
 using StakeholdersService.Services;
 using StakeholdersService.Startup;
-using StakeholdersService.UseCases;
+using StakeholdersService.Services;
 using System.Reflection.Emit;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,10 +21,13 @@ builder.Services.ConfigureAuth();
 
 builder.Services.AddDbContext<StakeholdersContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
 
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITokenGenerator, JwtGenerator>();
+builder.Services.AddScoped<IAccountService, AccountService>();
 
 var app = builder.Build();
 
@@ -40,11 +43,12 @@ else
     app.UseHsts();
 }
 
-app.UseRouting();
-app.UseCors(corsPolicy);
-app.UseHttpsRedirection();
-app.UseAuthorization();
-app.UseAuthorization();
+app.UseHttpsRedirection();   
+app.UseRouting();            
+app.UseCors(corsPolicy);     
+
+app.UseAuthentication();     
+app.UseAuthorization();      
 
 app.MapControllers();
 
