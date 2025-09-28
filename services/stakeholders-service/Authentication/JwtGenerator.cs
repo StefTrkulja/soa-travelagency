@@ -12,9 +12,9 @@ namespace StakeholdersService.Authentication;
 
 public class JwtGenerator : ITokenGenerator
 {
-    private readonly string _key = Environment.GetEnvironmentVariable("JWT_KEY") ?? "explorer_secret_key";
-    private readonly string _issuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? "explorer";
-    private readonly string _audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? "explorer-front.com";
+    private readonly string _key = Environment.GetEnvironmentVariable("JWT_KEY") ?? "explorer_secret_key_very_long_and_secure_key_for_production";
+    private readonly string _issuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? "travel-agency";
+    private readonly string _audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? "travel-agency-users";
 
     public Result<AuthenticationTokensDto> GenerateAccessToken(User user)
     {
@@ -66,7 +66,7 @@ public class JwtGenerator : ITokenGenerator
             _issuer,
             _audience,
             claims,
-            expires: DateTime.Now.AddMinutes(expirationTimeInMinutes),
+            expires: DateTime.UtcNow.AddMinutes(expirationTimeInMinutes),
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);

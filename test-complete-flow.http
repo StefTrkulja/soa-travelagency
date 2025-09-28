@@ -1,0 +1,38 @@
+### Test kompletnog flow-a za kreiranje ture
+
+### 1. Registracija novog autora
+POST http://localhost:5000/api/gateway/users/register
+Content-Type: application/json
+
+{
+  "username": "autor1",
+  "email": "autor1@example.com",
+  "password": "SecurePass123!",
+  "firstName": "Marko",
+  "lastName": "Petrovic"
+}
+
+### 2. Logovanje autora
+POST http://localhost:5000/api/gateway/users/login
+Content-Type: application/json
+
+{
+  "username": "autor1",
+  "password": "SecurePass123!"
+}
+
+### 3. Kreiranje ture (koristiti token iz prethodnog zahteva)
+POST http://localhost:5000/api/gateway/tours
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Planinarenje kroz Taru",
+  "description": "Predivno planinarenje kroz nacionalni park Tara sa vodicem. Tura traje 3 dana i uključuje smeštaj u bungalovoma.",
+  "difficulty": 3,
+  "tags": ["planinarenje", "priroda", "tara"]
+}
+
+### 4. Dobijanje svojih tura
+GET http://localhost:5000/api/gateway/tours/my
+Authorization: Bearer {{token}}

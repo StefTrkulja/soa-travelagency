@@ -1,0 +1,55 @@
+# Test endpoints for Travel Agency system
+
+# 1. Register a new author
+POST http://localhost:5000/api/gateway/stakeholders/account/registration
+Content-Type: application/json
+
+{
+  "username": "autor1",
+  "password": "Password123!",
+  "email": "autor1@test.com",
+  "role": 1
+}
+
+###
+
+# 2. Login to get JWT token
+POST http://localhost:5000/api/gateway/stakeholders/authentication/login
+Content-Type: application/json
+
+{
+  "username": "autor1",
+  "password": "Password123!"
+}
+
+###
+
+# 3. Create a new tour (use JWT token from step 2)
+POST http://localhost:5000/api/gateway/tours
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "name": "Avantura u Karpatima",
+  "description": "Uzbudljiva planinarska tura kroz predele Karpata sa prekrasnim pogledima i divljom prirodom.",
+  "difficulty": 2,
+  "tags": ["planine", "priroda", "avantura", "hiking"]
+}
+
+###
+
+# 4. Get my tours (use JWT token)
+GET http://localhost:5000/api/gateway/tours/my
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+###
+
+# 5. Get all tours (use JWT token)
+GET http://localhost:5000/api/gateway/tours
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+###
+
+# 6. Get specific tour by ID (use JWT token and replace {id} with actual tour ID)
+GET http://localhost:5000/api/gateway/tours/{id}
+Authorization: Bearer YOUR_JWT_TOKEN_HERE

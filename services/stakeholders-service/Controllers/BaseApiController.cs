@@ -52,6 +52,6 @@ public class BaseApiController : ControllerBase
 
     protected ActionResult CreateResponse<T>(Result<T> result)
     {
-        return result.IsSuccess ? Ok(result.Value) : CreateErrorResponse((List<IError>)result.Errors);
+        return result.IsSuccess ? Ok(result.Value) : CreateErrorResponse(result.Errors.ToList());
     }
 }

@@ -5,24 +5,22 @@ using StakeholdersService.Domain.RepositoryInterfaces;
 using StakeholdersService.Repositories;
 using StakeholdersService.Services;
 using StakeholdersService.Startup;
-using StakeholdersService.Services;
-using System.Reflection.Emit;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-
+// Services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.ConfigureSwagger(builder.Configuration);
+
 const string corsPolicy = "_corsPolicy";
 builder.Services.ConfigureCors(corsPolicy);
 builder.Services.ConfigureAuth();
 
 builder.Services.AddDbContext<StakeholdersContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -31,7 +29,9 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+// Swagger i dev tools u Development ili Docker okruženju
+if (app.Environment.IsDevelopment() ||
+    string.Equals(app.Environment.EnvironmentName, "Docker", StringComparison.OrdinalIgnoreCase))
 {
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
@@ -43,14 +43,22 @@ else
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();   
-app.UseRouting();            
-app.UseCors(corsPolicy);     
+// U kontejneru slušaš HTTP (port 80), zato ne forsiraj HTTPS redirect
+if (!string.Equals(app.Environment.EnvironmentName, "Docker", StringComparison.OrdinalIgnoreCase))
+{
+    app.UseHttpsRedirection();
+}
 
-app.UseAuthentication();     
-app.UseAuthorization();      
+app.UseRouting();
+app.UseCors(corsPolicy);
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
+
+// Jednostavan health endpoint za compose/gateway
+app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
 
 app.Run();
 

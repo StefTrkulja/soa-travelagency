@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  # PostgreSQL baza za StakeholdersService
+  stakeholders-db:
+    image: postgres:15
+    container_name: stakeholders-db
+    environment:
+      POSTGRES_DB: stakeholders
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: super
+    ports:
+      - "5434:5432"
+    volumes:
+      - stakeholders_data:/var/lib/postgresql/data
+    networks:
+      - travel-agency-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d stakeholders"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL baza za TourService
+  tours-db:
+    image: postgres:15
+    container_name: tours-db
+    environment:
+      POSTGRES_DB: tours
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: super
+    ports:
+      - "5433:5432"
+    volumes:
+      - tours_data:/var/lib/postgresql/data
+    networks:
+      - travel-agency-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tours"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # StakeholdersService
+  stakeholders-service:
+    build:
+      context: ./services/stakeholders-service
+      dockerfile: Dockerfile
+    container_name: stakeholders-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Host=stakeholders-db;Port=5432;Database=stakeholders;Username=postgres;Password=super
+      - JWT_KEY=explorer_secret_key_very_long_and_secure_key_for_production
+      - JWT_ISSUER=travel-agency
+      - JWT_AUDIENCE=travel-agency-users
+    ports:
+      - "5001:80"
+    depends_on:
+      stakeholders-db:
+        condition: service_healthy
+    networks:
+      - travel-agency-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # TourService
+  tour-service:
+    build:
+      context: ./services/tour-service
+      dockerfile: Dockerfile
+    container_name: tour-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Host=tours-db;Port=5432;Database=tours;Username=postgres;Password=super
+      - JWT_KEY=explorer_secret_key_very_long_and_secure_key_for_production
+      - JWT_ISSUER=travel-agency
+      - JWT_AUDIENCE=travel-agency-users
+    ports:
+      - "5002:80"
+    depends_on:
+      tours-db:
+        condition: service_healthy
+    networks:
+      - travel-agency-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # API Gateway
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ASPNETCORE_URLS=http://+:80
+      - JWT_KEY=explorer_secret_key_very_long_and_secure_key_for_production
+      - JWT_ISSUER=travel-agency
+      - JWT_AUDIENCE=travel-agency-users
+      - STAKEHOLDERS_SERVICE_URL=http://stakeholders-service:80
+      - TOUR_SERVICE_URL=http://tour-service:80
+    ports:
+      - "5000:80"
+    depends_on:
+      - stakeholders-service
+      - tour-service
+    networks:
+      - travel-agency-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  stakeholders_data:
+  tours_data:
+
+networks:
+  travel-agency-network:
+    driver: bridge
