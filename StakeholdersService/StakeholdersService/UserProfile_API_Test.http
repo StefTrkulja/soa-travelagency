@@ -1,0 +1,76 @@
+# User Profile API Test
+# User Profile Management Endpoints
+
+### Variables
+@baseUrl = http://localhost:5177
+@userToken = your_user_jwt_token_here
+
+### 1. User Registration (now requires name and surname)
+POST {{baseUrl}}/api/authentication/register
+Content-Type: application/json
+
+{
+    "username": "johndoe",
+    "password": "password123",
+    "email": "john@example.com",
+    "name": "John",
+    "surname": "Doe",
+    "userRole": 2
+}
+
+### 2. User Login 
+POST {{baseUrl}}/api/authentication/login
+Content-Type: application/json
+
+{
+    "username": "johndoe",
+    "password": "password123"
+}
+
+### 3. Get User Profile (Only shows name, surname, profilePicture, motto, biography, role)
+GET {{baseUrl}}/api/user/profile
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+### 4. Update User Profile (PATCH - partial update)
+PATCH {{baseUrl}}/api/user/profile
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+    "motto": "Life is beautiful",
+    "biography": "I am a software developer who loves to travel and explore new technologies.",
+    "profilePicture": "https://example.com/profile.jpg"
+}
+
+### 5. Update Name and Surname
+PATCH {{baseUrl}}/api/user/profile
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+    "name": "Jonathan", 
+    "surname": "Smith"
+}
+
+### 6. Clear Biography and Motto
+PATCH {{baseUrl}}/api/user/profile
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+    "motto": null,
+    "biography": null
+}
+
+###
+# Note: Replace {{userToken}} with an actual JWT token from login response
+# 
+# Expected behavior:
+# - Registration now requires name and surname
+# - Profile endpoint only shows: name, surname, profilePicture, motto, biography, role
+# - Username, password, email are NOT exposed in profile (security)
+# - Users can update their profile using PATCH (partial updates)
+# - Only authenticated users can access their own profile
+# - Name and surname are validated when updated (cannot be empty)
+# - ProfilePicture, Motto, and Biography are optional and can be set to null

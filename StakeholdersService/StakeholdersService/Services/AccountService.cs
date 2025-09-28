@@ -28,6 +28,50 @@ namespace StakeholdersService.Services
             return Result.Ok(new PagedResult<AccountDto>(userDtos, totalCount));
         }
 
+        public Result BlockUser(long userId)
+        {
+            var user = _userRepository.GetById(userId);
+            if (user == null)
+            {
+                return Result.Fail(FailureCode.NotFound).WithError("User not found");
+            }
+
+            if (user.Blocked)
+            {
+                return Result.Fail(FailureCode.InvalidArgument).WithError("User is already blocked");
+            }
+
+            var success = _userRepository.BlockUser(userId);
+            if (!success)
+            {
+                return Result.Fail(FailureCode.Internal).WithError("Failed to block user");
+            }
+
+            return Result.Ok();
+        }
+
+        public Result UnblockUser(long userId)
+        {
+            var user = _userRepository.GetById(userId);
+            if (user == null)
+            {
+                return Result.Fail(FailureCode.NotFound).WithError("User not found");
+            }
+
+            if (!user.Blocked)
+            {
+                return Result.Fail(FailureCode.InvalidArgument).WithError("User is not blocked");
+            }
+
+            var success = _userRepository.UnblockUser(userId);
+            if (!success)
+            {
+                return Result.Fail(FailureCode.Internal).WithError("Failed to unblock user");
+            }
+
+            return Result.Ok();
+        }
+
        
 
 

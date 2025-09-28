@@ -64,5 +64,37 @@ namespace StakeholdersService.Repositories
             return user;
         }
 
+        public bool BlockUser(long userId)
+        {
+            var user = _dbContext.Users.FirstOrDefault(u => u.Id == userId);
+            if (user == null) return false;
+            
+            user.Blocked = true;
+            _dbContext.SaveChanges();
+            return true;
+        }
+
+        public bool UnblockUser(long userId)
+        {
+            var user = _dbContext.Users.FirstOrDefault(u => u.Id == userId);
+            if (user == null) return false;
+            
+            user.Blocked = false;
+            _dbContext.SaveChanges();
+            return true;
+        }
+
+        public User? GetProfileById(long userId)
+        {
+            return _dbContext.Users.FirstOrDefault(u => u.Id == userId);
+        }
+
+        public User UpdateProfile(User user)
+        {
+            _dbContext.Users.Update(user);
+            _dbContext.SaveChanges();
+            return user;
+        }
+
     }
 }

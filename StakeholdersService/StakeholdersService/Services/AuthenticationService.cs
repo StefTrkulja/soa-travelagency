@@ -34,7 +34,7 @@ namespace StakeholdersService.Services
 
             try
             {
-                var user = _userRepository.Create(new User(account.Username, account.Password, account.Email, account.UserRole));
+                var user = _userRepository.Create(new User(account.Username, account.Password, account.Email, account.Name, account.Surname, account.UserRole));
              
 
                 return _tokenGenerator.GenerateAccessToken(user);

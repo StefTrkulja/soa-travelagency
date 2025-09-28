@@ -29,6 +29,20 @@ namespace StakeholdersService.Controllers
             return CreateResponse(result);
         }
 
+        [HttpPut("{userId}/block")]
+        public ActionResult BlockUser(long userId)
+        {
+            var result = _accountService.BlockUser(userId);
+            return CreateResponse(result);
+        }
+
+        [HttpPut("{userId}/unblock")]
+        public ActionResult UnblockUser(long userId)
+        {
+            var result = _accountService.UnblockUser(userId);
+            return CreateResponse(result);
+        }
+
 
 
 

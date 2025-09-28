@@ -1,0 +1,37 @@
+# Blocking Feature API Test
+# Administrator User Blocking/Unblocking Feature
+
+### Variables
+@baseUrl = http://localhost:5177
+@adminToken = your_admin_jwt_token_here
+@userId = 1
+
+### 1. Get All Accounts (shows Blocked field)
+GET {{baseUrl}}/api/administrator/account
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+### 2. Block User
+PUT {{baseUrl}}/api/administrator/account/{{userId}}/block
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+### 3. Unblock User  
+PUT {{baseUrl}}/api/administrator/account/{{userId}}/unblock
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+### 4. Get All Accounts Again (verify blocked status changed)
+GET {{baseUrl}}/api/administrator/account
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+###
+# Note: Replace {{adminToken}} with an actual JWT token from admin authentication
+# Note: Replace {{userId}} with an actual user ID from the database
+# 
+# Expected behavior:
+# - Only users with Administrator role can access these endpoints
+# - Block endpoint sets user.Blocked = true
+# - Unblock endpoint sets user.Blocked = false  
+# - All endpoints return appropriate error messages for validation failures
