@@ -63,7 +63,8 @@ builder.Services.AddCors(options =>
 var serviceEndpoints = new ServiceEndpoints
 {
     StakeholdersService = Environment.GetEnvironmentVariable("STAKEHOLDERS_SERVICE_URL") ?? "http://localhost:5001",
-    TourService = Environment.GetEnvironmentVariable("TOUR_SERVICE_URL") ?? "http://localhost:5002"
+    TourService = Environment.GetEnvironmentVariable("TOUR_SERVICE_URL") ?? "http://localhost:5002",
+    BlogService = Environment.GetEnvironmentVariable("BLOG_SERVICE_URL") ?? "http://localhost:5003"
 };
 
 builder.Services.AddSingleton(serviceEndpoints);
@@ -113,7 +114,8 @@ app.MapGet("/", () => Results.Ok(new
         swagger = "/swagger",
         health = "/healthz",
         stakeholders = "/api/gateway/stakeholders/*",
-        tours = "/api/gateway/tours/*"
+        tours = "/api/gateway/tours/*",
+        blogs = "/api/gateway/blogs/*"
     }
 }));
 

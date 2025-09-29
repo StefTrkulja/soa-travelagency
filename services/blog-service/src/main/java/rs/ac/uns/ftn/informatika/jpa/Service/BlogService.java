@@ -7,5 +7,5 @@ import rs.ac.uns.ftn.informatika.jpa.DTO.BlogResponse;
 import java.util.List;
 
 public interface BlogService {
-    BlogResponse create(BlogCreateRequest req, List<MultipartFile> images);
+    BlogResponse create(Long authorId, BlogCreateRequest req, List<MultipartFile> images);
 }

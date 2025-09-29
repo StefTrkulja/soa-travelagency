@@ -3,7 +3,7 @@ package rs.ac.uns.ftn.informatika.jpa.Service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import rs.ac.uns.ftn.informatika.jpa.*;
+// removed unused wildcard import
 import rs.ac.uns.ftn.informatika.jpa.DTO.BlogCreateRequest;
 import rs.ac.uns.ftn.informatika.jpa.DTO.BlogResponse;
 import rs.ac.uns.ftn.informatika.jpa.Model.Blog;
@@ -27,11 +27,12 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override @Transactional
-    public BlogResponse create(BlogCreateRequest req, List<MultipartFile> images) {
+    public BlogResponse create(Long authorId, BlogCreateRequest req, List<MultipartFile> images) {
         Blog blog = new Blog();
         blog.setTitle(req.title());
         blog.setDescriptionMd(req.descriptionMarkdown());
         blog.setDescriptionHtml(md.toSafeHtml(req.descriptionMarkdown()));
+        blog.setAuthorId(authorId);
         blog = repo.save(blog);
 
         var stored = storage.storeBlogImages(blog.getId(), images);
@@ -53,6 +54,7 @@ public class BlogServiceImpl implements BlogService {
                 blog.getTitle(),
                 blog.getDescriptionHtml(),
                 blog.getCreatedAt(),
+                blog.getAuthorId(),
                 blog.getImages().stream().map(BlogImage::getUrl).toList()
         );
     }

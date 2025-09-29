@@ -22,6 +22,9 @@ public class Blog {
     @Column(name="created_at", nullable=false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
+    @Column(name="author_id", nullable=false)
+    private Long authorId;
+
     @OneToMany(mappedBy = "blog", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BlogImage> images = new ArrayList<>();
 
@@ -49,6 +52,10 @@ public class Blog {
         return images;
     }
 
+    public Long getAuthorId() {
+        return authorId;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -71,5 +78,9 @@ public class Blog {
 
     public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public void setAuthorId(Long authorId) {
+        this.authorId = authorId;
     }
 }

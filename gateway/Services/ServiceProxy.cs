@@ -4,7 +4,7 @@ namespace Gateway.Services;
 
 public interface IServiceProxy
 {
-    Task<HttpResponseMessage> ForwardRequestAsync(string serviceName, string path, HttpMethod method, HttpContent? content = null, string? authToken = null);
+    Task<HttpResponseMessage> ForwardRequestAsync(string serviceName, string path, HttpMethod method, HttpContent? content = null, string? authToken = null, IDictionary<string, string>? extraHeaders = null);
 }
 
 public class ServiceProxy : IServiceProxy
@@ -20,7 +20,7 @@ public class ServiceProxy : IServiceProxy
         _logger = logger;
     }
 
-    public async Task<HttpResponseMessage> ForwardRequestAsync(string serviceName, string path, HttpMethod method, HttpContent? content = null, string? authToken = null)
+    public async Task<HttpResponseMessage> ForwardRequestAsync(string serviceName, string path, HttpMethod method, HttpContent? content = null, string? authToken = null, IDictionary<string, string>? extraHeaders = null)
     {
         var baseUrl = GetServiceUrl(serviceName);
         if (string.IsNullOrEmpty(baseUrl))
@@ -44,6 +44,14 @@ public class ServiceProxy : IServiceProxy
             request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
         }
 
+        if (extraHeaders != null)
+        {
+            foreach (var kvp in extraHeaders)
+            {
+                request.Headers.TryAddWithoutValidation(kvp.Key, kvp.Value);
+            }
+        }
+
         try
         {
             var response = await _httpClient.SendAsync(request);
@@ -63,6 +71,7 @@ public class ServiceProxy : IServiceProxy
         {
             "stakeholders" => _serviceEndpoints.StakeholdersService,
             "tours" => _serviceEndpoints.TourService,
+            "blogs" => _serviceEndpoints.BlogService,
             _ => string.Empty
         };
     }

@@ -27,10 +27,11 @@ public class BlogController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public BlogResponse create(
+            @RequestHeader("X-User-Id") Long authorId,
             @RequestPart("payload") @Valid String payloadJson,
             @RequestPart(value = "images", required = false) List<MultipartFile> images
     ) throws Exception {
         var payload = objectMapper.readValue(payloadJson, BlogCreateRequest.class);
-        return service.create(payload, images);
+        return service.create(authorId, payload, images);
     }
 }
