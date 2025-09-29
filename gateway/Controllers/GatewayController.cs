@@ -57,6 +57,35 @@ public class GatewayController : ControllerBase
         return await ForwardMultipartToBlogs("api/blogs", HttpMethod.Post, includeAuth: true, addUserIdHeader: true);
     }
 
+    // Follower service endpoints (example routes; feel free to extend as needed)
+    [HttpPost("followers/{id:long}/follow")]
+    [Authorize]
+    public async Task<IActionResult> FollowUser(long id)
+    {
+        return await ForwardRequest("followers", $"api/followers/{id}/follow", HttpMethod.Post, includeAuth: true);
+    }
+
+    [HttpDelete("followers/{id:long}/unfollow")]
+    [Authorize]
+    public async Task<IActionResult> UnfollowUser(long id)
+    {
+        return await ForwardRequest("followers", $"api/followers/{id}/unfollow", HttpMethod.Delete, includeAuth: true);
+    }
+
+    [HttpGet("followers/{id:long}/following")]
+    [Authorize]
+    public async Task<IActionResult> GetFollowing(long id)
+    {
+        return await ForwardRequest("followers", $"api/followers/{id}/following", HttpMethod.Get, includeAuth: true);
+    }
+
+    [HttpGet("followers/{id:long}/followers")]
+    [Authorize]
+    public async Task<IActionResult> GetFollowers(long id)
+    {
+        return await ForwardRequest("followers", $"api/followers/{id}/followers", HttpMethod.Get, includeAuth: true);
+    }
+
     [HttpGet("tours/my")]
     [Authorize(Policy = "authorPolicy")]
     public async Task<IActionResult> GetMyTours()

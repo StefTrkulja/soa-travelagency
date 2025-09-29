@@ -72,6 +72,7 @@ public class ServiceProxy : IServiceProxy
             "stakeholders" => _serviceEndpoints.StakeholdersService,
             "tours" => _serviceEndpoints.TourService,
             "blogs" => _serviceEndpoints.BlogService,
+            "followers" => _serviceEndpoints.FollowerService,
             _ => string.Empty
         };
     }

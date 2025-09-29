@@ -64,7 +64,8 @@ var serviceEndpoints = new ServiceEndpoints
 {
     StakeholdersService = Environment.GetEnvironmentVariable("STAKEHOLDERS_SERVICE_URL") ?? "http://localhost:5001",
     TourService = Environment.GetEnvironmentVariable("TOUR_SERVICE_URL") ?? "http://localhost:5002",
-    BlogService = Environment.GetEnvironmentVariable("BLOG_SERVICE_URL") ?? "http://localhost:5003"
+    BlogService = Environment.GetEnvironmentVariable("BLOG_SERVICE_URL") ?? "http://localhost:5003",
+    FollowerService = Environment.GetEnvironmentVariable("FOLLOWER_SERVICE_URL") ?? "http://localhost:5004"
 };
 
 builder.Services.AddSingleton(serviceEndpoints);

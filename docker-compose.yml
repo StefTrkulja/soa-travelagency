@@ -1,4 +1,23 @@
 services:
+  # Neo4j baza za FollowerService
+  neo4j:
+    image: neo4j:5
+    container_name: neo4j
+    environment:
+      NEO4J_AUTH: neo4j/password
+    ports:
+      - "7687:7687" # bolt
+      - "7474:7474" # http ui
+    volumes:
+      - neo4j_data:/data
+    networks:
+      - travel-agency-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/7474' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
   # PostgreSQL baza za StakeholdersService
   stakeholders-db:
     image: postgres:15
@@ -138,6 +157,30 @@ services:
       timeout: 10s
       retries: 3
 
+  # Follower microservice (Spring Boot + Neo4j)
+  follower-microservice:
+    build:
+      context: ./services/follower-microservice
+      dockerfile: Dockerfile
+    container_name: follower-microservice
+    environment:
+      - SPRING_NEO4J_URI=bolt://neo4j:7687
+      - SPRING_NEO4J_AUTHENTICATION_USERNAME=neo4j
+      - SPRING_NEO4J_AUTHENTICATION_PASSWORD=password
+      - SERVER_PORT=8081
+    ports:
+      - "5004:8081"
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    networks:
+      - travel-agency-network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/8081' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
   # API Gateway
   gateway:
     build:
@@ -153,12 +196,14 @@ services:
       - STAKEHOLDERS_SERVICE_URL=http://stakeholders-service:80
       - TOUR_SERVICE_URL=http://tour-service:80
       - BLOG_SERVICE_URL=http://blog-service:8080
+      - FOLLOWER_SERVICE_URL=http://follower-microservice:8081
     ports:
       - "5000:80"
     depends_on:
       - stakeholders-service
       - tour-service
       - blog-service
+      - follower-microservice
     networks:
       - travel-agency-network
     healthcheck:
@@ -172,6 +217,7 @@ volumes:
   tours_data:
   blog_data:
   blog_uploads:
+  neo4j_data:
 
 networks:
   travel-agency-network:
