@@ -57,6 +57,32 @@ public class GatewayController : ControllerBase
         return await ForwardMultipartToBlogs("api/blogs", HttpMethod.Post, includeAuth: true, addUserIdHeader: true);
     }
 
+    [HttpGet("blogs")]
+    public async Task<IActionResult> GetAllBlogs()
+    {
+        return await ForwardRequest("blogs", "api/blogs", HttpMethod.Get);
+    }
+
+    [HttpGet("blogs/{id}")]
+    public async Task<IActionResult> GetBlog(long id)
+    {
+        return await ForwardRequest("blogs", $"api/blogs/{id}", HttpMethod.Get);
+    }
+
+    [HttpPut("blogs/{id}")]
+    [Authorize(Policy = "authorPolicy")]
+    public async Task<IActionResult> UpdateBlog(long id)
+    {
+        return await ForwardMultipartToBlogs($"api/blogs/{id}", HttpMethod.Put, includeAuth: true, addUserIdHeader: true);
+    }
+
+    [HttpDelete("blogs/{id}")]
+    [Authorize(Policy = "authorPolicy")]
+    public async Task<IActionResult> DeleteBlog(long id)
+    {
+        return await ForwardRequestWithUserId("blogs", $"api/blogs/{id}", HttpMethod.Delete, includeAuth: true);
+    }
+
     // Follower service endpoints (example routes; feel free to extend as needed)
     [HttpPost("followers/{id:long}/follow")]
     [Authorize]
@@ -131,6 +157,49 @@ public class GatewayController : ControllerBase
             }
 
             var response = await _serviceProxy.ForwardRequestAsync(serviceName, path, method, content, authToken);
+            
+            var responseContent = await response.Content.ReadAsStringAsync();
+            
+            return StatusCode((int)response.StatusCode, 
+                string.IsNullOrEmpty(responseContent) ? null : responseContent);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing request for {ServiceName}/{Path}", serviceName, path);
+            return StatusCode(500, new { message = "Gateway error occurred" });
+        }
+    }
+
+    private async Task<IActionResult> ForwardRequestWithUserId(string serviceName, string path, HttpMethod method, bool includeAuth = false)
+    {
+        try
+        {
+            HttpContent? content = null;
+            
+            if (method == HttpMethod.Post || method == HttpMethod.Put || method == HttpMethod.Patch)
+            {
+                Request.EnableBuffering();
+                Request.Body.Position = 0;
+                var body = await ReadRequestBodyAsync();
+                if (!string.IsNullOrEmpty(body))
+                {
+                    content = new StringContent(body, Encoding.UTF8, "application/json");
+                }
+            }
+
+            string? authToken = null;
+            IDictionary<string, string>? extraHeaders = null;
+            if (includeAuth)
+            {
+                authToken = ExtractTokenFromHeader();
+                if (!string.IsNullOrEmpty(authToken))
+                {
+                    var userId = ExtractUserIdFromJwt(authToken);
+                    extraHeaders = new Dictionary<string, string> { { "X-User-Id", userId.ToString() } };
+                }
+            }
+
+            var response = await _serviceProxy.ForwardRequestAsync(serviceName, path, method, content, authToken, extraHeaders);
             
             var responseContent = await response.Content.ReadAsStringAsync();
             

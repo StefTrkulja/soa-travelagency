@@ -29,6 +29,13 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 
 var app = builder.Build();
 
+// Pokreni migracije automatski
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<StakeholdersContext>();
+    context.Database.Migrate();
+}
+
 // Swagger i dev tools u Development ili Docker okruženju
 if (app.Environment.IsDevelopment() ||
     string.Equals(app.Environment.EnvironmentName, "Docker", StringComparison.OrdinalIgnoreCase))
