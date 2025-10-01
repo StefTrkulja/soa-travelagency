@@ -50,10 +50,8 @@ public class Tour
     
     public DateTime? UpdatedAt { get; set; }
     
-    // Navigation property for tags
     public ICollection<TourTag> TourTags { get; set; } = new List<TourTag>();
     
-    // Helper method to get tags as list of strings
     public List<string> GetTags()
     {
         return TourTags.Select(tt => tt.Tag.Name).ToList();

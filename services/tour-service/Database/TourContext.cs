@@ -15,16 +15,13 @@ public class TourContext : DbContext
     {
         modelBuilder.HasDefaultSchema("tours");
 
-        // Tour configuration
         modelBuilder.Entity<Tour>()
             .HasIndex(t => t.AuthorId);
 
-        // Tag configuration
         modelBuilder.Entity<Tag>()
             .HasIndex(t => t.Name)
             .IsUnique();
 
-        // TourTag configuration (Many-to-Many)
         modelBuilder.Entity<TourTag>()
             .HasKey(tt => tt.Id);
             
@@ -44,7 +41,6 @@ public class TourContext : DbContext
             .HasForeignKey(tt => tt.TagId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Enum configurations
         modelBuilder.Entity<Tour>()
             .Property(t => t.Status)
             .HasConversion<string>();

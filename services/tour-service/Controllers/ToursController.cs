@@ -18,9 +18,6 @@ public class ToursController : BaseApiController
         _logger = logger;
     }
 
-    /// <summary>
-    /// Kreira novu turu. Dostupno samo autorima.
-    /// </summary>
     [HttpPost]
     [Authorize(Policy = "authorPolicy")]
     public async Task<ActionResult<TourDto>> CreateTour(CreateTourRequestDto request)
@@ -49,9 +46,6 @@ public class ToursController : BaseApiController
         }
     }
 
-    /// <summary>
-    /// Preuzima sve ture trenutnog autora. Dostupno samo autorima.
-    /// </summary>
     [HttpGet("my")]
     [Authorize(Policy = "authorPolicy")]
     public async Task<ActionResult<List<TourDto>>> GetMyTours()
@@ -75,9 +69,6 @@ public class ToursController : BaseApiController
         }
     }
 
-    /// <summary>
-    /// Preuzima turu po ID-ju. Dostupno svim autentifikovanim korisnicima.
-    /// </summary>
     [HttpGet("{id}")]
     [Authorize]
     public async Task<ActionResult<TourDto>> GetTour(long id)
@@ -94,9 +85,6 @@ public class ToursController : BaseApiController
         }
     }
 
-    /// <summary>
-    /// Preuzima sve ture. Dostupno svim autentifikovanim korisnicima.
-    /// </summary>
     [HttpGet]
     [Authorize]
     public async Task<ActionResult<List<TourDto>>> GetAllTours()

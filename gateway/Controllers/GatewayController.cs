@@ -18,7 +18,6 @@ public class GatewayController : ControllerBase
         _logger = logger;
     }
 
-    // Stakeholders service endpoints
     [HttpPost("stakeholders/users/login")]
     public async Task<IActionResult> Login()
     {
@@ -38,7 +37,6 @@ public class GatewayController : ControllerBase
         return await ForwardRequest("stakeholders", "api/administrator/account", HttpMethod.Get, includeAuth: true);
     }
 
-    // Tours service endpoints
     [HttpPost("tours")]
     [Authorize(Policy = "authorPolicy")]
     public async Task<IActionResult> CreateTour()

@@ -13,7 +13,6 @@ public class Tag
     [MaxLength(50)]
     public string Name { get; set; }
     
-    // Navigation property
     public ICollection<TourTag> TourTags { get; set; } = new List<TourTag>();
 
     public Tag()

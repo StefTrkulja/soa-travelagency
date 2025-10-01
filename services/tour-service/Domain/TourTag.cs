@@ -15,7 +15,6 @@ public class TourTag
     [Required]
     public long TagId { get; set; }
     
-    // Navigation properties
     public Tour Tour { get; set; } = null!;
     public Tag Tag { get; set; } = null!;
 }
