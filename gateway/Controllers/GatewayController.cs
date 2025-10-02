@@ -55,6 +55,28 @@ public class GatewayController : ControllerBase
         return await ForwardRequest("stakeholders", $"api/administrator/account/{userId}/unblock", HttpMethod.Put, includeAuth: true);
     }
 
+    // Profile management endpoints
+    [HttpGet("stakeholders/profile")]
+    [Authorize]
+    public async Task<IActionResult> GetMyProfile()
+    {
+        return await ForwardRequest("stakeholders", "api/profile", HttpMethod.Get, includeAuth: true);
+    }
+
+    [HttpGet("stakeholders/profile/{userId}")]
+    [Authorize]
+    public async Task<IActionResult> GetUserProfile(long userId)
+    {
+        return await ForwardRequest("stakeholders", $"api/profile/{userId}", HttpMethod.Get, includeAuth: true);
+    }
+
+    [HttpPut("stakeholders/profile")]
+    [Authorize]
+    public async Task<IActionResult> UpdateMyProfile()
+    {
+        return await ForwardRequest("stakeholders", "api/profile", HttpMethod.Put, includeAuth: true);
+    }
+
     // Tours service endpoints
     [HttpPost("tours")]
     [Authorize(Policy = "authorPolicy")]

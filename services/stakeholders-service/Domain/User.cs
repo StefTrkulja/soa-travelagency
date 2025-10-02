@@ -8,6 +8,11 @@
         public string Password { get; set; }
         public string Email { get; set; }
         public bool Blocked { get; set; }
+        public string? Name { get; set; }
+        public string? Surname { get; set; }
+        public string? ProfilePicture { get; set; }
+        public string? Biography { get; set; }
+        public string? Motto { get; set; }
 
         public UserRole Role { get; set; }
 
@@ -48,6 +53,15 @@
         public bool IsBlocked()
         {
             return Blocked;
+        }
+
+        public void UpdateProfile(string? name, string? surname, string? profilePicture, string? biography, string? motto)
+        {
+            Name = name;
+            Surname = surname;
+            ProfilePicture = profilePicture;
+            Biography = biography;
+            Motto = motto;
         }
 
         private void Validate()

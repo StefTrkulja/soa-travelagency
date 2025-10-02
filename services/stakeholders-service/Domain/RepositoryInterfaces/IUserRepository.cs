@@ -12,5 +12,7 @@
         User BlockUser(long userId);
         User UnblockUser(long userId);
         bool IsUserBlocked(long userId);
+        User? GetUserProfile(long userId);
+        User UpdateUserProfile(long userId, string? name, string? surname, string? profilePicture, string? biography, string? motto);
     }
 }

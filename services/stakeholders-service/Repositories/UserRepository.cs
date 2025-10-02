@@ -90,5 +90,21 @@ namespace StakeholdersService.Repositories
             var user = _dbContext.Users.FirstOrDefault(u => u.Id == userId);
             return user?.IsBlocked() ?? false;
         }
+
+        public User? GetUserProfile(long userId)
+        {
+            return _dbContext.Users.FirstOrDefault(u => u.Id == userId);
+        }
+
+        public User UpdateUserProfile(long userId, string? name, string? surname, string? profilePicture, string? biography, string? motto)
+        {
+            var user = _dbContext.Users.FirstOrDefault(u => u.Id == userId);
+            if (user == null)
+                throw new ArgumentException($"User with ID {userId} not found");
+
+            user.UpdateProfile(name, surname, profilePicture, biography, motto);
+            _dbContext.SaveChanges();
+            return user;
+        }
     }
 }
