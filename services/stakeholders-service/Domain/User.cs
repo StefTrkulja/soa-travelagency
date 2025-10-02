@@ -7,6 +7,7 @@
         public string Username { get; set; }
         public string Password { get; set; }
         public string Email { get; set; }
+        public bool Blocked { get; set; }
 
         public UserRole Role { get; set; }
 
@@ -25,12 +26,28 @@
 
         }
 
-        public User(string username, string password, string email, UserRole role)
+        public User(string username, string password, string email, UserRole role, bool blocked = false)
         {
             Username = username;
             Password = password;
             Email = email;
             Role = role;
+            Blocked = blocked;
+        }
+
+        public void Block()
+        {
+            Blocked = true;
+        }
+
+        public void Unblock()
+        {
+            Blocked = false;
+        }
+
+        public bool IsBlocked()
+        {
+            return Blocked;
         }
 
         private void Validate()

@@ -14,7 +14,8 @@ namespace StakeholdersService.Mapping
                 .ForMember(d => d.Id, opt => opt.MapFrom(s => s.Id))
                 .ForMember(d => d.Username, opt => opt.MapFrom(s => s.Username))
                 .ForMember(d => d.Email, opt => opt.MapFrom(s => s.Email))
-                .ForMember(d => d.Role, opt => opt.MapFrom(s => s.Role.ToString()));
+                .ForMember(d => d.Role, opt => opt.MapFrom(s => s.Role.ToString()))
+                .ForMember(d => d.Blocked, opt => opt.MapFrom(s => s.Blocked));
 
             // (opciono) Ako ćeš nekad mapirati nazad:
     
