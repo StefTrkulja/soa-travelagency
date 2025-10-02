@@ -28,11 +28,46 @@ namespace StakeholdersService.Services
             return Result.Ok(new PagedResult<AccountDto>(userDtos, totalCount));
         }
 
-       
+        public Result<AccountDto> BlockUser(long userId)
+        {
+            try
+            {
+                var user = _userRepository.GetById(userId);
+                if (user == null)
+                    return Result.Fail(FailureCode.NotFound).WithError($"User with ID {userId} not found");
 
+                if (user.Role == UserRole.Administrator)
+                    return Result.Fail(FailureCode.Forbidden).WithError("Cannot block administrator users");
 
+                var blockedUser = _userRepository.BlockUser(userId);
+                var accountDto = _mapper.Map<AccountDto>(blockedUser);
+                
+                return Result.Ok(accountDto);
+            }
+            catch (ArgumentException ex)
+            {
+                return Result.Fail(FailureCode.InvalidArgument).WithError(ex.Message);
+            }
+        }
 
+        public Result<AccountDto> UnblockUser(long userId)
+        {
+            try
+            {
+                var user = _userRepository.GetById(userId);
+                if (user == null)
+                    return Result.Fail(FailureCode.NotFound).WithError($"User with ID {userId} not found");
 
+                var unblockedUser = _userRepository.UnblockUser(userId);
+                var accountDto = _mapper.Map<AccountDto>(unblockedUser);
+                
+                return Result.Ok(accountDto);
+            }
+            catch (ArgumentException ex)
+            {
+                return Result.Fail(FailureCode.InvalidArgument).WithError(ex.Message);
+            }
+        }
     }
 
 

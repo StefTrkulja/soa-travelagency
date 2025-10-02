@@ -25,6 +25,9 @@ namespace StakeholdersService.Services
             var user = _userRepository.GetActiveByName(credentials.Username);
             if (user == null || credentials.Password != user.Password) return Result.Fail(FailureCode.NotFound);
 
+            if (user.IsBlocked())
+                return Result.Fail(FailureCode.Forbidden).WithError("User account is blocked");
+
             return _tokenGenerator.GenerateAccessToken(user);
         }
 

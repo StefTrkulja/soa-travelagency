@@ -1,0 +1,63 @@
+using AutoMapper;
+using FluentResults;
+using StakeholdersService.Common;
+using StakeholdersService.Domain.RepositoryInterfaces;
+using StakeholdersService.DTO;
+
+namespace StakeholdersService.Services
+{
+    public class ProfileService : IProfileService
+    {
+        private readonly IUserRepository _userRepository;
+        private readonly IMapper _mapper;
+
+        public ProfileService(IUserRepository userRepository, IMapper mapper)
+        {
+            _userRepository = userRepository;
+            _mapper = mapper;
+        }
+
+        public Result<UserProfileDto> GetUserProfile(long userId)
+        {
+            try
+            {
+                var user = _userRepository.GetUserProfile(userId);
+                if (user == null)
+                    return Result.Fail(FailureCode.NotFound).WithError($"User with ID {userId} not found");
+
+                var profileDto = _mapper.Map<UserProfileDto>(user);
+                return Result.Ok(profileDto);
+            }
+            catch (Exception ex)
+            {
+                return Result.Fail(FailureCode.InvalidArgument).WithError(ex.Message);
+            }
+        }
+
+        public Result<UserProfileDto> UpdateUserProfile(long userId, UpdateProfileDto updateProfileDto)
+        {
+            try
+            {
+                var updatedUser = _userRepository.UpdateUserProfile(
+                    userId,
+                    updateProfileDto.Name,
+                    updateProfileDto.Surname,
+                    updateProfileDto.ProfilePicture,
+                    updateProfileDto.Biography,
+                    updateProfileDto.Motto
+                );
+
+                var profileDto = _mapper.Map<UserProfileDto>(updatedUser);
+                return Result.Ok(profileDto);
+            }
+            catch (ArgumentException ex)
+            {
+                return Result.Fail(FailureCode.NotFound).WithError(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return Result.Fail(FailureCode.InvalidArgument).WithError(ex.Message);
+            }
+        }
+    }
+}
