@@ -14,6 +14,9 @@ RUN mvn clean package -DskipTests
 
 FROM openjdk:17-jdk-slim
 
+# Install wget for health checks
+RUN apt-get update && apt-get install -y wget && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 RUN mkdir -p uploads

@@ -34,8 +34,7 @@ namespace StakeholdersService.Repositories
         public bool IsAuthor(long userId)
         {
             var user = _dbContext.Users.FirstOrDefault(i => i.Id == userId);
-            if (user.Role == UserRole.Author) return true;
-            return false;
+            return user?.Role == UserRole.Author;
         }
 
         public List<User> GetPaged(int page, int pageSize, out int totalCount)
@@ -64,5 +63,48 @@ namespace StakeholdersService.Repositories
             return user;
         }
 
+        public User BlockUser(long userId)
+        {
+            var user = _dbContext.Users.FirstOrDefault(u => u.Id == userId);
+            if (user == null)
+                throw new ArgumentException($"User with ID {userId} not found");
+            
+            user.Block();
+            _dbContext.SaveChanges();
+            return user;
+        }
+
+        public User UnblockUser(long userId)
+        {
+            var user = _dbContext.Users.FirstOrDefault(u => u.Id == userId);
+            if (user == null)
+                throw new ArgumentException($"User with ID {userId} not found");
+            
+            user.Unblock();
+            _dbContext.SaveChanges();
+            return user;
+        }
+
+        public bool IsUserBlocked(long userId)
+        {
+            var user = _dbContext.Users.FirstOrDefault(u => u.Id == userId);
+            return user?.IsBlocked() ?? false;
+        }
+
+        public User? GetUserProfile(long userId)
+        {
+            return _dbContext.Users.FirstOrDefault(u => u.Id == userId);
+        }
+
+        public User UpdateUserProfile(long userId, string? name, string? surname, string? profilePicture, string? biography, string? motto)
+        {
+            var user = _dbContext.Users.FirstOrDefault(u => u.Id == userId);
+            if (user == null)
+                throw new ArgumentException($"User with ID {userId} not found");
+
+            user.UpdateProfile(name, surname, profilePicture, biography, motto);
+            _dbContext.SaveChanges();
+            return user;
+        }
     }
 }
