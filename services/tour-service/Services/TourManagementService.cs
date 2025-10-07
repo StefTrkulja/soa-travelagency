@@ -36,18 +36,15 @@ public class TourManagementService : ITourService
         {
             _logger.LogInformation("Kreiranje nove ture za autora {AuthorId}", authorId);
 
-            // Validate difficulty enum
             if (!Enum.IsDefined(typeof(TourDifficulty), request.Difficulty))
             {
                 return Result.Fail(new Error(FailureCode.ValidationError)
                     .WithMetadata("message", "Neispravna vrednost za težinu ture"));
             }
 
-            // Map DTO to domain entity
             var tour = _mapper.Map<Tour>(request);
             tour.AuthorId = authorId;
 
-            // Create tour first
             var createTourResult = await _tourRepository.CreateAsync(tour);
             if (createTourResult.IsFailed)
             {
@@ -56,16 +53,13 @@ public class TourManagementService : ITourService
 
             var createdTour = createTourResult.Value;
 
-            // Handle tags
             var tagsResult = await ProcessTagsAsync(request.Tags, createdTour.Id);
             if (tagsResult.IsFailed)
             {
-                // Rollback tour creation if tag processing fails
                 await _tourRepository.DeleteAsync(createdTour.Id);
                 return Result.Fail(tagsResult.Errors);
             }
 
-            // Retrieve the complete tour with tags
             var completeTourResult = await _tourRepository.GetByIdAsync(createdTour.Id);
             if (completeTourResult.IsFailed || completeTourResult.Value == null)
             {
@@ -165,7 +159,6 @@ public class TourManagementService : ITourService
     {
         try
         {
-            // Get existing tags
             var existingTagsResult = await _tagRepository.GetByNamesAsync(tagNames);
             if (existingTagsResult.IsFailed)
             {
@@ -175,7 +168,6 @@ public class TourManagementService : ITourService
             var existingTags = existingTagsResult.Value;
             var existingTagNames = existingTags.Select(t => t.Name.ToLower()).ToList();
 
-            // Create new tags that don't exist
             var newTagNames = tagNames
                 .Where(name => !existingTagNames.Contains(name.ToLower()))
                 .ToList();
@@ -193,7 +185,6 @@ public class TourManagementService : ITourService
                 allTags.Add(createTagResult.Value);
             }
 
-            // Create TourTag relationships
             foreach (var tag in allTags)
             {
                 var tourTag = new TourTag

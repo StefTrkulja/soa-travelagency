@@ -2,14 +2,25 @@ using Gateway.Configuration;
 using Gateway.Models;
 using Gateway.Services;
 using Microsoft.OpenApi.Models;
+using Serilog;
+using Serilog.Formatting.Elasticsearch;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .Enrich.WithProperty("ServiceName", "api-gateway")
+    .WriteTo.Console()
+    .WriteTo.File("/logs/gateway.log", rollingInterval: RollingInterval.Day)
+    .WriteTo.File(new ElasticsearchJsonFormatter(), "/logs/gateway-elastic.json", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// Configure Swagger with JWT support
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo 
@@ -19,7 +30,6 @@ builder.Services.AddSwaggerGen(c =>
         Description = "API Gateway za Travel Agency mikroservisnu arhitekturu"
     });
 
-    // Add JWT Authentication to Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
@@ -45,21 +55,20 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Configure JWT Authentication
 builder.Services.ConfigureJwtAuthentication();
 
-// Configure CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", builder =>
+    options.AddPolicy("AllowAll", policy =>
     {
-        builder.AllowAnyOrigin()
-               .AllowAnyMethod()
-               .AllowAnyHeader();
+        policy.WithOrigins("http://localhost:3000", "http://localhost:8080", "http://localhost:8081", "http://localhost:5173")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials()
+              .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
     });
 });
 
-// Configure service endpoints
 var serviceEndpoints = new ServiceEndpoints
 {
     StakeholdersService = Environment.GetEnvironmentVariable("STAKEHOLDERS_SERVICE_URL") ?? "http://localhost:5001",
@@ -74,7 +83,6 @@ builder.Services.AddScoped<IServiceProxy, ServiceProxy>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment() ||
     string.Equals(app.Environment.EnvironmentName, "Docker", StringComparison.OrdinalIgnoreCase))
 {
@@ -87,7 +95,6 @@ if (app.Environment.IsDevelopment() ||
     });
 }
 
-// U kontejneru slušaš HTTP (port 80), zato ne forsiraj HTTPS redirect
 if (!string.Equals(app.Environment.EnvironmentName, "Docker", StringComparison.OrdinalIgnoreCase))
 {
     app.UseHttpsRedirection();
@@ -101,10 +108,8 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Health check endpoint
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok", timestamp = DateTime.UtcNow }));
 
-// Root endpoint with API information
 app.MapGet("/", () => Results.Ok(new 
 { 
     name = "Travel Agency Gateway",
@@ -120,7 +125,19 @@ app.MapGet("/", () => Results.Ok(new
     }
 }));
 
-app.Run();
+try
+{
+    Log.Information("Starting API Gateway");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
 
 namespace Gateway
 {

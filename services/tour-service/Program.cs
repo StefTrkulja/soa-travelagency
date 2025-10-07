@@ -4,10 +4,22 @@ using TourService.Domain.RepositoryInterfaces;
 using TourService.Repositories;
 using TourService.Services;
 using TourService.Startup;
+using Serilog;
+using Serilog.Formatting.Elasticsearch;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Services
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .Enrich.WithProperty("ServiceName", "tour-service")
+    .WriteTo.Console()
+    .WriteTo.File("/logs/tour-service.log", rollingInterval: RollingInterval.Day)
+    .WriteTo.File(new ElasticsearchJsonFormatter(), "/logs/tour-service-elastic.json", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.ConfigureSwagger(builder.Configuration);
@@ -21,14 +33,12 @@ builder.Services.AddDbContext<TourContext>(options =>
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-// Register services
 builder.Services.AddScoped<ITourService, TourManagementService>();
 builder.Services.AddScoped<ITourRepository, TourRepository>();
 builder.Services.AddScoped<ITagRepository, TagRepository>();
 
 var app = builder.Build();
 
-// Swagger i dev tools u Development ili Docker okruženju
 if (app.Environment.IsDevelopment() ||
     string.Equals(app.Environment.EnvironmentName, "Docker", StringComparison.OrdinalIgnoreCase))
 {
@@ -42,7 +52,6 @@ else
     app.UseHsts();
 }
 
-// U kontejneru slušaš HTTP (port 80), zato ne forsiraj HTTPS redirect
 if (!string.Equals(app.Environment.EnvironmentName, "Docker", StringComparison.OrdinalIgnoreCase))
 {
     app.UseHttpsRedirection();
@@ -56,10 +65,21 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Jednostavan health endpoint za compose/gateway
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
 
-app.Run();
+try
+{
+    Log.Information("Starting Tour Service");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
 
 namespace TourService
 {

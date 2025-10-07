@@ -5,10 +5,22 @@ using StakeholdersService.Domain.RepositoryInterfaces;
 using StakeholdersService.Repositories;
 using StakeholdersService.Services;
 using StakeholdersService.Startup;
+using Serilog;
+using Serilog.Formatting.Elasticsearch;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Services
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .Enrich.WithProperty("ServiceName", "stakeholders-service")
+    .WriteTo.Console()
+    .WriteTo.File("/logs/stakeholders-service.log", rollingInterval: RollingInterval.Day)
+    .WriteTo.File(new ElasticsearchJsonFormatter(), "/logs/stakeholders-service-elastic.json", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.ConfigureSwagger(builder.Configuration);
@@ -30,14 +42,12 @@ builder.Services.AddScoped<IProfileService, ProfileService>();
 
 var app = builder.Build();
 
-// Pokreni migracije automatski
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<StakeholdersContext>();
     context.Database.Migrate();
 }
 
-// Swagger i dev tools u Development ili Docker okruženju
 if (app.Environment.IsDevelopment() ||
     string.Equals(app.Environment.EnvironmentName, "Docker", StringComparison.OrdinalIgnoreCase))
 {
@@ -51,7 +61,6 @@ else
     app.UseHsts();
 }
 
-// U kontejneru slušaš HTTP (port 80), zato ne forsiraj HTTPS redirect
 if (!string.Equals(app.Environment.EnvironmentName, "Docker", StringComparison.OrdinalIgnoreCase))
 {
     app.UseHttpsRedirection();
@@ -65,10 +74,21 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Jednostavan health endpoint za compose/gateway
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
 
-app.Run();
+try
+{
+    Log.Information("Starting Stakeholders Service");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
 
 namespace StakeholdersService
 {

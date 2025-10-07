@@ -1,13 +1,105 @@
 services:
-  # Neo4j baza za FollowerService
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - travel-agency-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: kibana
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - travel-agency-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    networks:
+      - travel-agency-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    networks:
+      - travel-agency-network
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - travel-agency-network
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
+    networks:
+      - travel-agency-network
+
   neo4j:
     image: neo4j:5
     container_name: neo4j
     environment:
       NEO4J_AUTH: neo4j/password
     ports:
-      - "7687:7687" # bolt
-      - "7474:7474" # http ui
+      - "7687:7687"
+      - "7474:7474"
     volumes:
       - neo4j_data:/data
     networks:
@@ -18,7 +110,6 @@ services:
       timeout: 5s
       retries: 12
 
-  # PostgreSQL baza za StakeholdersService
   stakeholders-db:
     image: postgres:15
     container_name: stakeholders-db
@@ -38,7 +129,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # PostgreSQL baza za TourService
   tours-db:
     image: postgres:15
     container_name: tours-db
@@ -58,7 +148,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # PostgreSQL baza za BlogService
   blog-db:
     image: postgres:15
     container_name: blog-db
@@ -78,7 +167,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # StakeholdersService
   stakeholders-service:
     build:
       context: ./services/stakeholders-service
@@ -96,15 +184,18 @@ services:
     depends_on:
       stakeholders-db:
         condition: service_healthy
+      elasticsearch:
+        condition: service_started
     networks:
       - travel-agency-network
+    volumes:
+      - ./logs:/logs
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/healthz"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # TourService
   tour-service:
     build:
       context: ./services/tour-service
@@ -122,15 +213,18 @@ services:
     depends_on:
       tours-db:
         condition: service_healthy
+      elasticsearch:
+        condition: service_started
     networks:
       - travel-agency-network
+    volumes:
+      - ./logs:/logs
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/healthz"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # BlogService
   blog-service:
     build:
       context: ./services/blog-service
@@ -147,17 +241,19 @@ services:
     depends_on:
       blog-db:
         condition: service_healthy
+      elasticsearch:
+        condition: service_started
     networks:
       - travel-agency-network
     volumes:
       - blog_uploads:/app/uploads
+      - ./logs:/logs
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # Follower microservice (Spring Boot + Neo4j)
   follower-microservice:
     build:
       context: ./services/follower-microservice
@@ -181,7 +277,6 @@ services:
       timeout: 5s
       retries: 10
 
-  # API Gateway
   gateway:
     build:
       context: ./gateway
@@ -200,14 +295,41 @@ services:
     ports:
       - "5000:80"
     depends_on:
-      - stakeholders-service
-      - tour-service
-      - blog-service
-      - follower-microservice
+      stakeholders-service:
+        condition: service_started
+      tour-service:
+        condition: service_started
+      blog-service:
+        condition: service_started
+      follower-microservice:
+        condition: service_started
+      elasticsearch:
+        condition: service_started
     networks:
       - travel-agency-network
+    volumes:
+      - ./logs:/logs
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: travel-agency-frontend
+    ports:
+      - "8081:8080"
+    depends_on:
+      - gateway
+    networks:
+      - travel-agency-network
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -218,6 +340,9 @@ volumes:
   blog_data:
   blog_uploads:
   neo4j_data:
+  elasticsearch_data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   travel-agency-network:

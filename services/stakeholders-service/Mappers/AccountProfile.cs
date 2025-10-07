@@ -1,5 +1,4 @@
-﻿// StakeholdersService/Mapping/AccountProfile.cs
-using AutoMapper;
+﻿using AutoMapper;
 using StakeholdersService.Domain;
 using StakeholdersService.DTO;
 
@@ -9,7 +8,6 @@ namespace StakeholdersService.Mapping
     {
         public AccountProfile()
         {
-            // User -> AccountDto
             CreateMap<User, AccountDto>()
                 .ForMember(d => d.Id, opt => opt.MapFrom(s => s.Id))
                 .ForMember(d => d.Username, opt => opt.MapFrom(s => s.Username))
@@ -29,8 +27,6 @@ namespace StakeholdersService.Mapping
                 .ForMember(d => d.Biography, opt => opt.MapFrom(s => s.Biography))
                 .ForMember(d => d.Motto, opt => opt.MapFrom(s => s.Motto));
 
-            // (opciono) Ako ćeš nekad mapirati nazad:
-    
         }
     }
 }

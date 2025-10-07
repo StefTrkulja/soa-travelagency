@@ -16,7 +16,6 @@ public static class SwaggerConfiguration
                 Description = "API za upravljanje turama u Travel Agency sistemu"
             });
 
-            // Add JWT Authentication to Swagger
             c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
