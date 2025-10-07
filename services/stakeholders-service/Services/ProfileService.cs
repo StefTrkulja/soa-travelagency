@@ -59,5 +59,19 @@ namespace StakeholdersService.Services
                 return Result.Fail(FailureCode.InvalidArgument).WithError(ex.Message);
             }
         }
+
+        public Result<List<UserProfileDto>> GetAllUsers()
+        {
+            try
+            {
+                var users = _userRepository.GetAllUsers();
+                var userDtos = _mapper.Map<List<UserProfileDto>>(users);
+                return Result.Ok(userDtos);
+            }
+            catch (Exception ex)
+            {
+                return Result.Fail(FailureCode.InvalidArgument).WithError(ex.Message);
+            }
+        }
     }
 }

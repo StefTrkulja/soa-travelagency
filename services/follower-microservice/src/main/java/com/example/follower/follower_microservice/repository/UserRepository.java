@@ -4,6 +4,7 @@ package com.example.follower.follower_microservice.repository;
 import com.example.follower.follower_microservice.entity.User;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
+import org.springframework.data.neo4j.repository.support.CypherdslConditionExecutor;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -13,24 +14,24 @@ import java.util.Set;
 
 @Repository
 public interface UserRepository extends Neo4jRepository<User, Long> {
-    // Pronadji korisnika sa njegovim pratiteljima i onima koje prati
+    // Pronalazenje korisnika sa njegovim pratiteljima i onima koje prati
     @Query("MATCH (u:User {userId: $userId}) " +
             "OPTIONAL MATCH (u)-[:FOLLOWS]->(following) " +
             "OPTIONAL MATCH (follower)-[:FOLLOWS]->(u) " +
             "RETURN u, collect(DISTINCT following) as following, collect(DISTINCT follower) as followers")
     Optional<User> findByUserIdWithRelations(@Param("userId") Long userId);
 
-    // Dobavi sve korisnike koje određeni korisnik prati
+    // Dobavljanje svih korisnika koje određeni korisnik prati
     @Query("MATCH (u:User {userId: $userId})-[:FOLLOWS]->(following) " +
             "RETURN following")
     Set<User> findFollowingByUserId(@Param("userId") Long userId);
 
-    // Dobavi sve pratioce odredjenog korisnika
+    // Dobavljanje svih pratioca odredjenog korisnika
     @Query("MATCH (follower)-[:FOLLOWS]->(u:User {userId: $userId}) " +
             "RETURN follower")
     Set<User> findFollowersByUserId(@Param("userId") Long userId);
 
-    // Proveri da li korisnik A prati korisnika B
+    // Provera da li korisnik A prati korisnika B
     @Query("MATCH (a:User {userId: $followerId})-[:FOLLOWS]->(b:User {userId: $followedId}) " +
             "RETURN COUNT(*) > 0")
     boolean isFollowing(@Param("followerId") Long followerId, @Param("followedId") Long followedId);
@@ -43,8 +44,13 @@ public interface UserRepository extends Neo4jRepository<User, Long> {
             "LIMIT $limit")
     List<User> findRecommendations(@Param("userId") Long userId, @Param("limit") int limit);
 
-    // Dobavi samo ID-jeve korisnika koje prati
+    // Dobavljanje samo ID-jeva korisnika koje prati
     @Query("MATCH (u:User {userId: $userId})-[:FOLLOWS]->(following) " +
             "RETURN following.userId")
     List<Long> findFollowingUserIds(@Param("userId") Long userId);
+
+    // Brisanje FOLLOWS relacije izmedju dva korisnika
+    @Query("MATCH (follower:User {userId: $followerId})-[r:FOLLOWS]->(followed:User {userId: $followedId}) " +
+            "DELETE r")
+    void deleteFollowRelationship(@Param("followerId") Long followerId, @Param("followedId") Long followedId);
 }

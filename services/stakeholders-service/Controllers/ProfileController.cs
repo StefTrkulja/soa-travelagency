@@ -41,6 +41,13 @@ namespace StakeholdersService.Controllers
             return CreateResponse(result);
         }
 
+        [HttpGet("all")]
+        public ActionResult<List<UserProfileDto>> GetAllUsers()
+        {
+            var result = _profileService.GetAllUsers();
+            return CreateResponse(result);
+        }
+
         private long GetCurrentUserId()
         {
             var userIdClaim = User.FindFirst("id");

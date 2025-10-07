@@ -31,7 +31,7 @@ public class FollowerServiceImpl implements FollowerService {
             throw new IllegalArgumentException("User cannot follow themselves");
         }
 
-        // Ako već prati, vrati 409 Conflict
+        // Ako vec prati, vrati 409 Conflict
         if (isFollowing(followerId, followedId)) {
             log.info("User {} already follows user {}", followerId, followedId);
             throw new IllegalStateException("User already follows the target user");
@@ -39,10 +39,10 @@ public class FollowerServiceImpl implements FollowerService {
 
         // Pronadji ili kreiraj oba korisnika
         User follower = userRepository.findById(followerId)
-                .orElseGet(() -> createOrUpdateUser(followerId, null));
+                .orElseGet(() -> createOrUpdateUser(followerId, "User" + followerId));
 
         User followed = userRepository.findById(followedId)
-                .orElseGet(() -> createOrUpdateUser(followedId, null));
+                .orElseGet(() -> createOrUpdateUser(followedId, "User" + followedId));
 
         // Dodaj pracenje
         follower.follow(followed);
@@ -54,21 +54,37 @@ public class FollowerServiceImpl implements FollowerService {
 
     @Override
     public boolean unfollowUser(Long followerId, Long followedId) {
+        log.info("=== UNFOLLOW REQUEST START ===");
+        log.info("Follower ID: {}, Followed ID: {}", followerId, followedId);
+        
         try {
-            User follower = userRepository.findByUserIdWithRelations(followerId)
-                    .orElseThrow(() -> new UserNotFoundException("Follower not found: " + followerId));
+            // Zabrani samopraćenje
+            if (followerId.equals(followedId)) {
+                log.warn("User {} tried to unfollow themselves", followerId);
+                return false;
+            }
 
-            User followed = userRepository.findById(followedId)
-                    .orElseThrow(() -> new UserNotFoundException("User to unfollow not found: " + followedId));
+            // Proveri da li prati korisnika
+            boolean isCurrentlyFollowing = isFollowing(followerId, followedId);
+            log.info("Is user {} currently following user {}? {}", followerId, followedId, isCurrentlyFollowing);
+            
+            if (!isCurrentlyFollowing) {
+                log.info("User {} does not follow user {}", followerId, followedId);
+                return false;
+            }
 
-            follower.unfollow(followed);
-            userRepository.save(follower);
+            // Direktno brisanje FOLLOWS relacije izmedju dva korisnika
+            log.info("Deleting FOLLOWS relationship between {} and {}", followerId, followedId);
+            userRepository.deleteFollowRelationship(followerId, followedId);
+            log.info("Successfully deleted FOLLOWS relationship");
 
-            log.info("User {} unfollowed user {}", followerId, followedId);
+            log.info("User {} successfully unfollowed user {}", followerId, followedId);
+            log.info("=== UNFOLLOW REQUEST END ===");
             return true;
 
         } catch (Exception e) {
-            log.error("Error while unfollowing user: {}", e.getMessage());
+            log.error("Error while unfollowing user: {}", e.getMessage(), e);
+            log.info("=== UNFOLLOW REQUEST END (ERROR) ===");
             return false;
         }
     }
@@ -91,13 +107,25 @@ public class FollowerServiceImpl implements FollowerService {
     @Override
     @Transactional(readOnly = true)
     public Set<User> getFollowing(Long userId) {
-        return userRepository.findFollowingByUserId(userId);
+        Set<User> following = userRepository.findFollowingByUserId(userId);
+        // Za svakog korisnika, učitaj broj followers i following
+        for (User user : following) {
+            user.setFollowersCount(userRepository.findFollowersByUserId(user.getUserId()).size());
+            user.setFollowingCount(userRepository.findFollowingByUserId(user.getUserId()).size());
+        }
+        return following;
     }
 
     @Override
     @Transactional(readOnly = true)
     public Set<User> getFollowers(Long userId) {
-        return userRepository.findFollowersByUserId(userId);
+        Set<User> followers = userRepository.findFollowersByUserId(userId);
+        // Za svakog korisnika, učitaj broj followers i following
+        for (User user : followers) {
+            user.setFollowersCount(userRepository.findFollowersByUserId(user.getUserId()).size());
+            user.setFollowingCount(userRepository.findFollowingByUserId(user.getUserId()).size());
+        }
+        return followers;
     }
 
     @Override
@@ -124,7 +152,13 @@ public class FollowerServiceImpl implements FollowerService {
     @Override
     @Transactional(readOnly = true)
     public List<User> getRecommendations(Long userId, int limit) {
-        return userRepository.findRecommendations(userId, limit);
+        List<User> recommendations = userRepository.findRecommendations(userId, limit);
+        // Za svakog korisnika, učitaj broj followers i following
+        for (User user : recommendations) {
+            user.setFollowersCount(userRepository.findFollowersByUserId(user.getUserId()).size());
+            user.setFollowingCount(userRepository.findFollowingByUserId(user.getUserId()).size());
+        }
+        return recommendations;
     }
 
     @Override

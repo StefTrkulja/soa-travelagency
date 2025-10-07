@@ -7,5 +7,6 @@ namespace StakeholdersService.Services
     {
         Result<UserProfileDto> GetUserProfile(long userId);
         Result<UserProfileDto> UpdateUserProfile(long userId, UpdateProfileDto updateProfileDto);
+        Result<List<UserProfileDto>> GetAllUsers();
     }
 }

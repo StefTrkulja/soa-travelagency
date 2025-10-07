@@ -39,6 +39,22 @@ builder.Services.AddScoped<ITagRepository, TagRepository>();
 
 var app = builder.Build();
 
+// Apply database migrations
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<TourContext>();
+    try
+    {
+        context.Database.Migrate();
+        Log.Information("Database migrations applied successfully");
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "An error occurred while applying database migrations");
+        throw;
+    }
+}
+
 if (app.Environment.IsDevelopment() ||
     string.Equals(app.Environment.EnvironmentName, "Docker", StringComparison.OrdinalIgnoreCase))
 {

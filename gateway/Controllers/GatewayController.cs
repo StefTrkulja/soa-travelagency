@@ -68,6 +68,13 @@ public class GatewayController : ControllerBase
         return await ForwardRequest("stakeholders", $"api/profile/{userId}", HttpMethod.Get, includeAuth: true);
     }
 
+    [HttpGet("stakeholders/profile/all")]
+    [Authorize]
+    public async Task<IActionResult> GetAllUsers()
+    {
+        return await ForwardRequest("stakeholders", "api/profile/all", HttpMethod.Get, includeAuth: true);
+    }
+
     [HttpPut("stakeholders/profile")]
     [Authorize]
     public async Task<IActionResult> UpdateMyProfile()
@@ -121,14 +128,14 @@ public class GatewayController : ControllerBase
     [Authorize]
     public async Task<IActionResult> FollowUser(long id)
     {
-        return await ForwardRequest("followers", $"api/followers/{id}/follow", HttpMethod.Post, includeAuth: true);
+        return await ForwardFollowRequest("followers", "api/followers/follow", HttpMethod.Post, id, includeAuth: true);
     }
 
-    [HttpDelete("followers/{id:long}/unfollow")]
+    [HttpPost("followers/{id:long}/unfollow")]
     [Authorize]
     public async Task<IActionResult> UnfollowUser(long id)
     {
-        return await ForwardRequest("followers", $"api/followers/{id}/unfollow", HttpMethod.Delete, includeAuth: true);
+        return await ForwardFollowRequest("followers", "api/followers/unfollow", HttpMethod.Post, id, includeAuth: true);
     }
 
     [HttpGet("followers/{id:long}/following")]
@@ -143,6 +150,20 @@ public class GatewayController : ControllerBase
     public async Task<IActionResult> GetFollowers(long id)
     {
         return await ForwardRequest("followers", $"api/followers/{id}/followers", HttpMethod.Get, includeAuth: true);
+    }
+
+    [HttpGet("followers/{id:long}/recommendations")]
+    [Authorize]
+    public async Task<IActionResult> GetRecommendations(long id, [FromQuery] int limit = 10)
+    {
+        return await ForwardRequest("followers", $"api/followers/{id}/recommendations?limit={limit}", HttpMethod.Get, includeAuth: true);
+    }
+
+    [HttpGet("followers/check")]
+    [Authorize]
+    public async Task<IActionResult> CheckFollowing([FromQuery] long followerId, [FromQuery] long followedId)
+    {
+        return await ForwardRequest("followers", $"api/followers/check?followerId={followerId}&followedId={followedId}", HttpMethod.Get, includeAuth: true);
     }
 
     [HttpGet("tours/my")]
@@ -325,5 +346,47 @@ public class GatewayController : ControllerBase
             return authHeader.Substring("Bearer ".Length);
         }
         return null;
+    }
+
+    private async Task<IActionResult> ForwardFollowRequest(string serviceName, string path, HttpMethod method, long targetUserId, bool includeAuth = false)
+    {
+        try
+        {
+            _logger.LogInformation("=== FORWARD FOLLOW REQUEST START ===");
+            _logger.LogInformation("Service: {ServiceName}, Path: {Path}, Method: {Method}, TargetUserId: {TargetUserId}", 
+                serviceName, path, method, targetUserId);
+            
+            var followerId = ExtractUserIdFromJwt(ExtractTokenFromHeader());
+            _logger.LogInformation("Extracted followerId: {FollowerId}", followerId);
+            
+            var followRequest = new { followerId = followerId, followedId = targetUserId };
+            var json = System.Text.Json.JsonSerializer.Serialize(followRequest);
+            _logger.LogInformation("Request body: {Json}", json);
+            
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            string? authToken = null;
+            if (includeAuth)
+            {
+                authToken = ExtractTokenFromHeader();
+                _logger.LogInformation("Auth token included: {HasToken}", !string.IsNullOrEmpty(authToken));
+            }
+
+            _logger.LogInformation("Forwarding request to {ServiceName}/{Path}", serviceName, path);
+            var response = await _serviceProxy.ForwardRequestAsync(serviceName, path, method, content, authToken);
+            _logger.LogInformation("Received response with status: {StatusCode}", response.StatusCode);
+            
+            var responseContent = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("Response content: {ResponseContent}", responseContent);
+            _logger.LogInformation("=== FORWARD FOLLOW REQUEST END ===");
+            
+            return StatusCode((int)response.StatusCode, 
+                string.IsNullOrEmpty(responseContent) ? null : responseContent);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing follow request for {ServiceName}/{Path}", serviceName, path);
+            return StatusCode(500, new { message = "Gateway error occurred" });
+        }
     }
 }

@@ -20,12 +20,24 @@
 				Create Tour
 			</v-list-item>
 
+			<v-list-item size="large" prepend-icon="mdi-blog" to="/blogs">
+				Blogs
+			</v-list-item>
+
+			<v-list-item size="large" prepend-icon="mdi-plus" to="/create-blog" v-if="store.role === 'Author'">
+				Create Blog
+			</v-list-item>
+
 			<v-list-item size="large" prepend-icon="mdi-account" @click="showUserProfile">
 				Profile
 			</v-list-item>
 
-			<v-list-item size="large" prepend-icon="mdi-account-group" to="/users" v-if="store.role === 'Administrator'">
-				Users
+			<v-list-item size="large" prepend-icon="mdi-account-group" to="/users">
+				Discover Users
+			</v-list-item>
+
+			<v-list-item size="large" prepend-icon="mdi-cog" to="/admin/users" v-if="store.role === 'Administrator'">
+				Manage Users
 			</v-list-item>
 		</v-list>
 

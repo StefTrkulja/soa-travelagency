@@ -7,11 +7,14 @@ import com.example.follower.follower_microservice.entity.User;
 import com.example.follower.follower_microservice.service.FollowerService;
 import jakarta.validation.Valid;
 //import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/followers")
@@ -19,6 +22,7 @@ import java.util.List;
 public class FollowerController {
 
     private final FollowerService followerService;
+    private static final Logger log = LoggerFactory.getLogger(FollowerController.class);
 
     public FollowerController(FollowerService followerService) {
         this.followerService = followerService;
@@ -56,13 +60,20 @@ public class FollowerController {
 
     @PostMapping("/unfollow")
     public ResponseEntity<FollowResponse> unfollowUser(@Valid @RequestBody FollowRequest request) {
+        log.info("=== UNFOLLOW CONTROLLER START ===");
+        log.info("Received unfollow request: followerId={}, followedId={}", request.getFollowerId(), request.getFollowedId());
+        
         boolean success = followerService.unfollowUser(request.getFollowerId(), request.getFollowedId());
+        log.info("Unfollow service returned: {}", success);
 
         FollowResponse response = FollowResponse.builder()
                 .success(success)
                 .message(success ? "Successfully unfollowed user" : "Failed to unfollow user")
                 .build();
 
+        log.info("Sending response: success={}, message={}", response.isSuccess(), response.getMessage());
+        log.info("=== UNFOLLOW CONTROLLER END ===");
+        
         return ResponseEntity.status(success ? HttpStatus.OK : HttpStatus.BAD_REQUEST).body(response);
     }
 
@@ -76,6 +87,18 @@ public class FollowerController {
     public ResponseEntity<List<Long>> getFollowerIds(@PathVariable Long userId) {
         List<Long> followerIds = followerService.getFollowerIds(userId);
         return ResponseEntity.ok(followerIds);
+    }
+
+    @GetMapping("/{userId}/following")
+    public ResponseEntity<Set<User>> getFollowing(@PathVariable Long userId) {
+        Set<User> following = followerService.getFollowing(userId);
+        return ResponseEntity.ok(following);
+    }
+
+    @GetMapping("/{userId}/followers")
+    public ResponseEntity<Set<User>> getFollowers(@PathVariable Long userId) {
+        Set<User> followers = followerService.getFollowers(userId);
+        return ResponseEntity.ok(followers);
     }
 
     @GetMapping("/{userId}/info")

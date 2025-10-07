@@ -4,6 +4,10 @@ import HomeView from '../views/HomeView.vue';
 import SignUpView from '../views/SignUpView.vue';
 import CreateTourView from '../views/CreateTourView.vue';
 import ToursView from '../views/ToursView.vue';
+import ProfileView from '../views/ProfileView.vue';
+import BlogView from '../views/BlogView.vue';
+import CreateBlogView from '../views/CreateBlogView.vue';
+import UsersView from '../views/UsersView.vue';
 import { store } from '@/utils/store';
 
 const routes = [
@@ -21,6 +25,30 @@ const routes = [
     name: 'Tours', 
     component: ToursView,
     meta: { requiresAuth: true, role: ['Author'] }
+  },
+  { 
+    path: '/profile/:username', 
+    name: 'Profile', 
+    component: ProfileView,
+    meta: { requiresAuth: true }
+  },
+  { 
+    path: '/blogs', 
+    name: 'Blogs', 
+    component: BlogView,
+    meta: { requiresAuth: true }
+  },
+  { 
+    path: '/create-blog', 
+    name: 'CreateBlog', 
+    component: CreateBlogView,
+    meta: { requiresAuth: true, role: ['Author'] }
+  },
+  { 
+    path: '/users', 
+    name: 'Users', 
+    component: UsersView,
+    meta: { requiresAuth: true }
   },
 ];
 

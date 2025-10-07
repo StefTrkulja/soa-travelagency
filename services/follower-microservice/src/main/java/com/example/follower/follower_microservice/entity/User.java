@@ -1,9 +1,5 @@
 package com.example.follower.follower_microservice.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
@@ -23,6 +19,10 @@ public class User {
 
     @Relationship(type = "FOLLOWS", direction = Relationship.Direction.INCOMING)
     private Set<User> followers = new HashSet<>();
+
+    // Transient fields for counts (not stored in Neo4j)
+    private transient Integer followersCount = 0;
+    private transient Integer followingCount = 0;
 
     public User() {
         this.following = new HashSet<>();
@@ -119,5 +119,21 @@ public class User {
 
     public void setFollowers(Set<User> followers) {
         this.followers = followers;
+    }
+
+    public Integer getFollowersCount() {
+        return followersCount;
+    }
+
+    public void setFollowersCount(Integer followersCount) {
+        this.followersCount = followersCount;
+    }
+
+    public Integer getFollowingCount() {
+        return followingCount;
+    }
+
+    public void setFollowingCount(Integer followingCount) {
+        this.followingCount = followingCount;
     }
 }

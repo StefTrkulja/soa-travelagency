@@ -106,5 +106,10 @@ namespace StakeholdersService.Repositories
             _dbContext.SaveChanges();
             return user;
         }
+
+        public List<User> GetAllUsers()
+        {
+            return _dbContext.Users.ToList();
+        }
     }
 }
