@@ -59,7 +59,56 @@ build/
 .npmrc
 pnpm-lock.yaml
 yarn.lock
-# (lock fajl možeš i zadržati po želji stabilnosti, timska odluka)
+
+# Vue.js specific
+.vite/
+*.local
+.cache/
+.temp/
+.DS_Store
+.fleet
+.ijwb
+
+# Local env files
+.env.local
+.env.*.local
+
+# Editor directories and files
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Production build
+/dist
+
+# Vite build output
+dist-ssr/
+*.local
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Vue test coverage
+coverage/
+.nyc_output/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
 
 # ----- Coverage / lint / cache -----
 coverage/
