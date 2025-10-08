@@ -36,6 +36,7 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddScoped<ITourService, TourManagementService>();
 builder.Services.AddScoped<ITourRepository, TourRepository>();
 builder.Services.AddScoped<ITagRepository, TagRepository>();
+builder.Services.AddScoped<ITourValidationService, TourValidationService>();
 
 var app = builder.Build();
 

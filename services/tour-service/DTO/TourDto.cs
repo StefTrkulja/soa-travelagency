@@ -13,5 +13,10 @@ public class TourDto
     public long AuthorId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public DateTime? PublishedAt { get; set; }
+    public DateTime? ArchivedAt { get; set; }
+    public decimal? DistanceInKm { get; set; }
     public List<string> Tags { get; set; } = new List<string>();
+    public List<TourKeyPointDto> KeyPoints { get; set; } = new List<TourKeyPointDto>();
+    public List<TourTransportTimeDto> TransportTimes { get; set; } = new List<TourTransportTimeDto>();
 }

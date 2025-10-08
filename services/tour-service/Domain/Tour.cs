@@ -9,7 +9,15 @@ public enum TourStatus
     Published,
     Active,
     Completed,
-    Cancelled
+    Cancelled,
+    Archived
+}
+
+public enum TransportType
+{
+    Walking,
+    Bicycle,
+    Car
 }
 
 public enum TourDifficulty
@@ -50,7 +58,18 @@ public class Tour
     
     public DateTime? UpdatedAt { get; set; }
     
+    public DateTime? PublishedAt { get; set; }
+    
+    public DateTime? ArchivedAt { get; set; }
+    
+    [Column(TypeName = "decimal(10,3)")]
+    public decimal? DistanceInKm { get; set; }
+    
     public ICollection<TourTag> TourTags { get; set; } = new List<TourTag>();
+    
+    public ICollection<TourKeyPoint> KeyPoints { get; set; } = new List<TourKeyPoint>();
+    
+    public ICollection<TourTransportTime> TransportTimes { get; set; } = new List<TourTransportTime>();
     
     public List<string> GetTags()
     {

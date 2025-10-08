@@ -12,13 +12,17 @@
 
 	<v-navigation-drawer v-model="drawer" temporary location="right" v-if="store.role !== 'guest'">
 		<v-list>
-			<v-list-item size="large" prepend-icon="mdi-map" to="/tours">
-				Tours
-			</v-list-item>
+		<v-list-item size="large" prepend-icon="mdi-map" to="/tours" v-if="store.role === 'Author'">
+			My Tours
+		</v-list-item>
 
-			<v-list-item size="large" prepend-icon="mdi-plus" to="/create-tour" v-if="store.role === 'Author'">
-				Create Tour
-			</v-list-item>
+		<v-list-item size="large" prepend-icon="mdi-map-marker-multiple" to="/tours/public" v-if="store.role === 'Tourist'">
+			Available Tours
+		</v-list-item>
+
+		<v-list-item size="large" prepend-icon="mdi-plus" to="/create-tour" v-if="store.role === 'Author'">
+			Create Tour
+		</v-list-item>
 
 			<v-list-item size="large" prepend-icon="mdi-blog" to="/blogs">
 				Blogs

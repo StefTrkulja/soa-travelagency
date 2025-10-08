@@ -68,6 +68,24 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override
+    public List<BlogResponse> getFollowingBlogs(List<Long> followingUserIds) {
+        if (followingUserIds == null || followingUserIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        return repo.findByAuthorIdIn(followingUserIds).stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Override
+    public List<BlogResponse> getMyBlogs(Long userId) {
+        return repo.findByAuthorId(userId).stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Override
     public BlogResponse getById(Long id) {
         Blog blog = repo.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Blog not found with id: " + id));

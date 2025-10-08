@@ -6,7 +6,10 @@
         <div class="d-flex justify-space-between align-center">
           <div>
             <h1 class="text-h3 font-weight-bold text-primary mb-2">Blog Posts</h1>
-            <p class="text-subtitle-1 text-grey-darken-1">Discover amazing travel stories and experiences</p>
+            <p class="text-subtitle-1 text-grey-darken-1">
+              <span v-if="store.role === 'Author'">Your blogs and blogs from people you follow</span>
+              <span v-else>Blogs from people you follow</span>
+            </p>
           </div>
           <v-btn
             v-if="store.role === 'Author'"
@@ -46,7 +49,10 @@
           <v-card-text class="text-center pa-12">
             <v-icon icon="mdi-blog" size="120" color="grey-lighten-1" class="mb-4"></v-icon>
             <h2 class="text-h4 mb-3">No Blog Posts Yet</h2>
-            <p class="text-body-1 text-grey-darken-1 mb-6">Be the first to share your travel experiences!</p>
+            <p class="text-body-1 text-grey-darken-1 mb-6">
+              <span v-if="store.role === 'Author'">Create your first blog post or follow other authors to see their content!</span>
+              <span v-else>Follow some authors to see their blog posts here!</span>
+            </p>
             <v-btn
               v-if="store.role === 'Author'"
               size="large"
@@ -109,7 +115,28 @@
           </div>
 
           <v-card-title class="text-h5 font-weight-bold pa-4 pb-2">
-            {{ blog.title }}
+            <div class="d-flex align-center">
+              <span>{{ blog.title }}</span>
+              <v-spacer></v-spacer>
+              <v-chip
+                v-if="isMyBlog(blog)"
+                color="primary"
+                size="x-small"
+                variant="flat"
+                class="ml-2"
+              >
+                My Blog
+              </v-chip>
+              <v-chip
+                v-else
+                color="success"
+                size="x-small"
+                variant="outlined"
+                class="ml-2"
+              >
+                Following
+              </v-chip>
+            </div>
           </v-card-title>
 
           <v-card-text class="pa-4 pt-0">
@@ -234,13 +261,56 @@ export default {
       this.errorMessage = '';
 
       try {
-        const response = await axios.get('/blogs');
-        this.blogs = response.data;
+        // First fetch following users to populate this.followingUsers
+        await this.fetchFollowingUsers();
+        
+        if (this.store.role === 'Author') {
+          // Authors see their own blogs + blogs of users they follow
+          const [myBlogsResponse, followingBlogsResponse] = await Promise.all([
+            axios.get('/blogs/my'),
+            this.fetchFollowingBlogs()
+          ]);
+          
+          const myBlogs = myBlogsResponse.data || [];
+          const followingBlogs = followingBlogsResponse || [];
+          
+          // Combine blogs, remove duplicates
+          const allBlogs = [...myBlogs, ...followingBlogs];
+          const uniqueBlogs = allBlogs.filter((blog, index, self) => 
+            index === self.findIndex(b => b.id === blog.id)
+          );
+          
+          this.blogs = uniqueBlogs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        } else {
+          // Tourists and others see only blogs of users they follow
+          const followingBlogs = await this.fetchFollowingBlogs();
+          this.blogs = followingBlogs || [];
+        }
       } catch (error) {
         console.error('Error fetching blogs:', error);
         this.errorMessage = error.response?.data?.message || 'Failed to load blogs. Please try again.';
       } finally {
         this.loading = false;
+      }
+    },
+    async fetchFollowingBlogs() {
+      try {
+        // Convert followingUsers Set to array of IDs
+        const followingIds = Array.from(this.followingUsers);
+        //console.log('Following IDs to send:', followingIds);
+        
+        if (followingIds.length === 0) {
+          console.log('No following users, returning empty array');
+          return [];
+        }
+        
+        // Get blogs from following users
+        const blogsResponse = await axios.post('/blogs/following', followingIds);
+        //console.log('Blogs response:', blogsResponse.data);
+        return blogsResponse.data || [];
+      } catch (error) {
+        console.error('Error fetching following blogs:', error);
+        return [];
       }
     },
     viewBlogDetails(blogId) {
@@ -270,13 +340,24 @@ export default {
       }
     },
     isMyBlog(blog) {
-      // For now, we'll assume all blogs can be edited by authors
-      // In a real app, you'd check if blog.authorId === currentUser.id
-      return this.store.role === 'Author';
+      // Check if the blog is written by the current user
+      // Convert both to numbers for proper comparison
+      const blogAuthorId = Number(blog.authorId);
+      const currentUserId = Number(this.currentUserId);
+      
+      //console.log('Checking if blog is mine:', {
+      //  blogId: blog.id,
+      //  blogAuthorId: blogAuthorId,
+      //  currentUserId: currentUserId,
+      //  isMine: blogAuthorId === currentUserId
+      //});
+      
+      return blogAuthorId === currentUserId;
     },
     canCommentOnBlog(blog) {
-      // User can comment if they follow the blog author
-      return this.followingUsers.has(blog.authorId);
+      // User can comment if they follow the author or if it is their own blog
+      // or if it is their own blog (they can comment on their own blogs)
+      return this.followingUsers.has(blog.authorId) || this.isMyBlog(blog);
     },
     addComment(blogId) {
       // Placeholder for comment functionality
@@ -318,15 +399,16 @@ export default {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         this.currentUserId = payload.id || payload.userId;
+        //console.log('Current user ID set to:', this.currentUserId);
+        //console.log('Full JWT payload:', payload);
       } catch (e) {
         console.error('Error parsing token:', e);
       }
+    } else {
+      console.log('No token found in localStorage');
     }
     
-    await Promise.all([
-      this.fetchBlogs(),
-      this.fetchFollowingUsers()
-    ]);
+    await this.fetchBlogs();
   }
 };
 </script>

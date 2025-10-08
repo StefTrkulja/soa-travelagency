@@ -11,6 +11,7 @@ import rs.ac.uns.ftn.informatika.jpa.DTO.BlogResponse;
 import rs.ac.uns.ftn.informatika.jpa.DTO.BlogUpdateRequest;
 import rs.ac.uns.ftn.informatika.jpa.Service.BlogService;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -38,6 +39,22 @@ public class BlogController {
     @GetMapping
     public List<BlogResponse> getAll() {
         return service.getAll();
+    }
+
+    @PostMapping("/following")
+    public List<BlogResponse> getFollowingBlogs(@RequestBody(required = false) List<Long> followingUserIds) {
+        //System.out.println("Received followingUserIds: " + followingUserIds);
+        if (followingUserIds == null) {
+            followingUserIds = new ArrayList<>();
+        }
+        //System.out.println("Processed followingUserIds: " + followingUserIds);
+        return service.getFollowingBlogs(followingUserIds);
+    }
+
+    @GetMapping("/my")
+    public List<BlogResponse> getMyBlogs(@RequestHeader("X-User-Id") Long userId) {
+        //System.out.println("Received userId for my blogs: " + userId);
+        return service.getMyBlogs(userId);
     }
 
     @GetMapping("/{id}")

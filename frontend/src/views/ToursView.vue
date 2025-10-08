@@ -34,6 +34,11 @@
       </v-col>
     </v-row>
 
+    <!-- Success Alert -->
+    <v-alert v-if="successMessage" type="success" class="mb-6" dismissible @click:close="successMessage = ''">
+      {{ successMessage }}
+    </v-alert>
+
     <!-- Error State -->
     <v-alert v-if="errorMessage" type="error" class="mb-6" dismissible @click:close="errorMessage = ''">
       {{ errorMessage }}
@@ -128,16 +133,95 @@
               </v-chip>
             </div>
 
-            <!-- Meta Info -->
-            <v-divider class="my-3"></v-divider>
-            <div class="d-flex justify-space-between text-caption text-grey-darken-1">
-              <div>
-                <v-icon icon="mdi-calendar" size="small" class="mr-1"></v-icon>
-                Created: {{ formatDate(tour.createdAt) }}
+            <!-- Key Points Info -->
+            <div v-if="tour.keyPoints && tour.keyPoints.length > 0" class="mb-3">
+              <v-divider class="my-3"></v-divider>
+              <div class="d-flex align-center mb-2">
+                <v-icon icon="mdi-map-marker" size="small" class="mr-2" color="primary"></v-icon>
+                <span class="text-body-2 font-weight-medium">Key Points ({{ tour.keyPoints.length }})</span>
               </div>
-              <div v-if="tour.updatedAt">
-                <v-icon icon="mdi-update" size="small" class="mr-1"></v-icon>
-                Updated: {{ formatDate(tour.updatedAt) }}
+              <div class="key-points-preview">
+                <v-chip
+                  v-for="(keyPoint, index) in tour.keyPoints.slice(0, 3)"
+                  :key="index"
+                  size="x-small"
+                  color="primary"
+                  variant="outlined"
+                  class="mr-1 mb-1"
+                >
+                  {{ keyPoint.name }}
+                </v-chip>
+                <v-chip
+                  v-if="tour.keyPoints.length > 3"
+                  size="x-small"
+                  color="grey"
+                  variant="outlined"
+                >
+                  +{{ tour.keyPoints.length - 3 }} more
+                </v-chip>
+              </div>
+            </div>
+
+            <!-- Transport Times Info -->
+            <div v-if="tour.transportTimes && tour.transportTimes.length > 0" class="mb-3">
+              <v-divider class="my-3"></v-divider>
+              <div class="d-flex align-center mb-2">
+                <v-icon icon="mdi-clock" size="small" class="mr-2" color="info"></v-icon>
+                <span class="text-body-2 font-weight-medium">Transport Times</span>
+              </div>
+              <div class="transport-times-preview">
+                <v-chip
+                  v-for="transportTime in tour.transportTimes"
+                  :key="transportTime.transportType"
+                  size="x-small"
+                  :color="getTransportColor(transportTime.transportType)"
+                  variant="outlined"
+                  class="mr-1 mb-1"
+                >
+                  <v-icon :icon="getTransportIcon(transportTime.transportType)" size="x-small" class="mr-1"></v-icon>
+                  {{ transportTime.durationMinutes }}min
+                </v-chip>
+              </div>
+            </div>
+
+            <!-- Distance Info -->
+            <div v-if="tour.distanceInKm" class="mb-3">
+              <v-divider class="my-3"></v-divider>
+              <div class="d-flex align-center">
+                <v-icon icon="mdi-map-marker-distance" size="small" class="mr-2" color="success"></v-icon>
+                <span class="text-body-2 font-weight-medium">{{ tour.distanceInKm }} km</span>
+              </div>
+            </div>
+
+            <!-- Timeline Info -->
+            <v-divider class="my-3"></v-divider>
+            <div class="timeline-info">
+              <div class="timeline-item">
+                <v-icon icon="mdi-calendar-plus" size="small" class="mr-2" color="primary"></v-icon>
+                <span class="text-caption text-grey-darken-1">
+                  <strong>Created:</strong> {{ formatDate(tour.createdAt) }}
+                </span>
+              </div>
+              
+              <div v-if="tour.publishedAt" class="timeline-item mt-1">
+                <v-icon icon="mdi-publish" size="small" class="mr-2" color="success"></v-icon>
+                <span class="text-caption text-grey-darken-1">
+                  <strong>Published:</strong> {{ formatDate(tour.publishedAt) }}
+                </span>
+              </div>
+              
+              <div v-if="tour.archivedAt" class="timeline-item mt-1">
+                <v-icon icon="mdi-archive" size="small" class="mr-2" color="warning"></v-icon>
+                <span class="text-caption text-grey-darken-1">
+                  <strong>Archived:</strong> {{ formatDate(tour.archivedAt) }}
+                </span>
+              </div>
+              
+              <div v-if="tour.updatedAt && tour.updatedAt !== tour.createdAt" class="timeline-item mt-1">
+                <v-icon icon="mdi-update" size="small" class="mr-2" color="info"></v-icon>
+                <span class="text-caption text-grey-darken-1">
+                  <strong>Last Updated:</strong> {{ formatDate(tour.updatedAt) }}
+                </span>
               </div>
             </div>
           </v-card-text>
@@ -152,6 +236,36 @@
               View Details
             </v-btn>
             <v-spacer></v-spacer>
+            
+            <!-- Action buttons based on status -->
+            <v-btn
+              v-if="canPublish(tour)"
+              icon="mdi-publish"
+              size="small"
+              variant="text"
+              color="success"
+              @click.stop="publishTour(tour)"
+              :title="'Publish Tour'"
+            ></v-btn>
+            <v-btn
+              v-if="tour.status === 'Published'"
+              icon="mdi-archive"
+              size="small"
+              variant="text"
+              color="warning"
+              @click.stop="archiveTour(tour)"
+              :title="'Archive Tour'"
+            ></v-btn>
+            <v-btn
+              v-if="tour.status === 'Archived'"
+              icon="mdi-restore"
+              size="small"
+              variant="text"
+              color="info"
+              @click.stop="activateTour(tour)"
+              :title="'Activate Tour'"
+            ></v-btn>
+            
             <v-btn
               icon="mdi-pencil"
               size="small"
@@ -220,6 +334,7 @@ export default {
       tours: [],
       loading: false,
       errorMessage: '',
+      successMessage: '',
       deleteDialog: false,
       tourToDelete: null,
       deletingTour: false
@@ -232,6 +347,7 @@ export default {
 
       try {
         const response = await axios.get('/tours/my');
+        console.log(response.data);
         this.tours = response.data;
       } catch (error) {
         console.error('Error fetching tours:', error);
@@ -295,6 +411,98 @@ export default {
         'Archived': 'warning'
       };
       return colors[status] || 'grey';
+    },
+    getTransportColor(transportType) {
+      const colors = {
+        'Walking': 'green',
+        'Bicycle': 'orange',
+        'Car': 'blue'
+      };
+      return colors[transportType] || 'grey';
+    },
+    getTransportIcon(transportType) {
+      const icons = {
+        'Walking': 'mdi-walk',
+        'Bicycle': 'mdi-bike',
+        'Car': 'mdi-car'
+      };
+      return icons[transportType] || 'mdi-help';
+    },
+    canPublish(tour) {
+      return tour.name && 
+             tour.description && 
+             tour.difficulty &&
+             tour.tags && tour.tags.length > 0 &&
+             tour.keyPoints && tour.keyPoints.length >= 2 &&
+             tour.transportTimes && tour.transportTimes.length >= 1;
+    },
+    async publishTour(tour) {
+      try {
+        await axios.post(`/tours/${tour.id}/publish`);
+        tour.status = 'Published';
+        tour.publishedAt = new Date().toISOString();
+        this.successMessage = 'Tour published successfully!';
+        setTimeout(() => { this.successMessage = ''; }, 3000);
+      } catch (error) {
+        console.error('Error publishing tour:', error);
+        this.errorMessage = error.response?.data?.message || error.message || 'Failed to publish tour.';
+        setTimeout(() => { this.errorMessage = ''; }, 5000);
+      }
+    },
+    async archiveTour(tour) {
+      try {
+        await axios.post(`/tours/${tour.id}/archive`);
+        tour.status = 'Archived';
+        tour.archivedAt = new Date().toISOString();
+        this.successMessage = 'Tour archived successfully!';
+        setTimeout(() => { this.successMessage = ''; }, 3000);
+      } catch (error) {
+        console.error('Error archiving tour:', error);
+        this.errorMessage = error.response?.data?.message || error.message || 'Failed to archive tour.';
+        setTimeout(() => { this.errorMessage = ''; }, 5000);
+      }
+    },
+    async activateTour(tour) {
+      try {
+        await axios.post(`/tours/${tour.id}/activate`);
+        tour.status = 'Published';
+        tour.archivedAt = null;
+        this.successMessage = 'Tour activated successfully!';
+        setTimeout(() => { this.successMessage = ''; }, 3000);
+      } catch (error) {
+        console.error('Error activating tour:', error);
+        this.errorMessage = error.response?.data?.message || error.message || 'Failed to activate tour.';
+        setTimeout(() => { this.errorMessage = ''; }, 5000);
+      }
+    },
+    canPublish(tour) {
+      return tour.status === 'Draft' &&
+             tour.name &&
+             tour.description &&
+             tour.difficulty !== null &&
+             tour.tags && tour.tags.length > 0 &&
+             tour.keyPoints && tour.keyPoints.length >= 2 &&
+             tour.transportTimes && tour.transportTimes.length >= 1;
+    },
+    getStatusColor(status) {
+      const colors = {
+        'Draft': 'grey',
+        'Published': 'success',
+        'Archived': 'warning'
+      };
+      return colors[status] || 'grey';
+    },
+    formatDate(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('sr-RS', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
     }
   },
   mounted() {
@@ -351,6 +559,11 @@ export default {
   min-height: 28px;
 }
 
+.key-points-preview,
+.transport-times-preview {
+  min-height: 24px;
+}
+
 .empty-state-card {
   background: white;
   border-radius: 16px;
@@ -377,6 +590,30 @@ export default {
 .tour-card:nth-child(3) { animation-delay: 0.2s; }
 .tour-card:nth-child(4) { animation-delay: 0.3s; }
 .tour-card:nth-child(5) { animation-delay: 0.4s; }
+
+/* Timeline styles */
+.timeline-info {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 12px;
+  border-left: 3px solid #1976d2;
+}
+
+.timeline-item {
+  display: flex;
+  align-items: center;
+  padding: 2px 0;
+}
+
+.timeline-item:not(:last-child) {
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.timeline-item:last-child {
+  margin-bottom: 0;
+}
 .tour-card:nth-child(6) { animation-delay: 0.5s; }
 
 @media (max-width: 960px) {

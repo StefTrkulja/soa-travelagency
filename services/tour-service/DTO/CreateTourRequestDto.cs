@@ -19,4 +19,11 @@ public class CreateTourRequestDto
     [Required(ErrorMessage = "Tagovi su obavezni")]
     [MinLength(1, ErrorMessage = "Mora postojati najmanje jedan tag")]
     public List<string> Tags { get; set; } = new List<string>();
+    
+    public List<CreateTourKeyPointRequestDto> KeyPoints { get; set; } = new List<CreateTourKeyPointRequestDto>();
+    
+    public List<CreateTourTransportTimeRequestDto> TransportTimes { get; set; } = new List<CreateTourTransportTimeRequestDto>();
+    
+    [Range(0, double.MaxValue, ErrorMessage = "Distance mora biti veća ili jednaka 0")]
+    public decimal? DistanceInKm { get; set; }
 }

@@ -10,6 +10,8 @@ import java.util.List;
 public interface BlogService {
     BlogResponse create(Long authorId, BlogCreateRequest req, List<MultipartFile> images);
     List<BlogResponse> getAll();
+    List<BlogResponse> getFollowingBlogs(List<Long> followingUserIds);
+    List<BlogResponse> getMyBlogs(Long userId);
     BlogResponse getById(Long id);
     BlogResponse update(Long id, Long authorId, BlogUpdateRequest req, List<MultipartFile> images);
     void delete(Long id, Long authorId);

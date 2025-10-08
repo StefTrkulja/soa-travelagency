@@ -103,6 +103,20 @@ public class GatewayController : ControllerBase
         return await ForwardRequest("blogs", "api/blogs", HttpMethod.Get);
     }
 
+    [HttpPost("blogs/following")]
+    [Authorize]
+    public async Task<IActionResult> GetFollowingBlogs()
+    {
+        return await ForwardRequest("blogs", "api/blogs/following", HttpMethod.Post, includeAuth: true);
+    }
+
+    [HttpGet("blogs/my")]
+    [Authorize]
+    public async Task<IActionResult> GetMyBlogs()
+    {
+        return await ForwardRequestWithUserId("blogs", "api/blogs/my", HttpMethod.Get, includeAuth: true);
+    }
+
     [HttpGet("blogs/{id}")]
     public async Task<IActionResult> GetBlog(long id)
     {
@@ -123,7 +137,7 @@ public class GatewayController : ControllerBase
         return await ForwardRequestWithUserId("blogs", $"api/blogs/{id}", HttpMethod.Delete, includeAuth: true);
     }
 
-    // Follower service endpoints (example routes; feel free to extend as needed)
+    // Follower service endpoints
     [HttpPost("followers/{id:long}/follow")]
     [Authorize]
     public async Task<IActionResult> FollowUser(long id)
@@ -185,6 +199,48 @@ public class GatewayController : ControllerBase
     public async Task<IActionResult> GetAllTours()
     {
         return await ForwardRequest("tours", "api/tours", HttpMethod.Get, includeAuth: true);
+    }
+
+    [HttpGet("tours/public")]
+    [Authorize(Policy = "touristPolicy")]
+    public async Task<IActionResult> GetPublicTours()
+    {
+        return await ForwardRequest("tours", "api/tours/public", HttpMethod.Get, includeAuth: true);
+    }
+
+    [HttpPost("tours/{tourId}/publish")]
+    [Authorize(Policy = "authorPolicy")]
+    public async Task<IActionResult> PublishTour(long tourId)
+    {
+        return await ForwardRequest("tours", $"api/tours/{tourId}/publish", HttpMethod.Post, includeAuth: true);
+    }
+
+    [HttpPost("tours/{tourId}/archive")]
+    [Authorize(Policy = "authorPolicy")]
+    public async Task<IActionResult> ArchiveTour(long tourId)
+    {
+        return await ForwardRequest("tours", $"api/tours/{tourId}/archive", HttpMethod.Post, includeAuth: true);
+    }
+
+    [HttpPost("tours/{tourId}/activate")]
+    [Authorize(Policy = "authorPolicy")]
+    public async Task<IActionResult> ActivateTour(long tourId)
+    {
+        return await ForwardRequest("tours", $"api/tours/{tourId}/activate", HttpMethod.Post, includeAuth: true);
+    }
+
+    [HttpPost("tours/{tourId}/key-points")]
+    [Authorize(Policy = "authorPolicy")]
+    public async Task<IActionResult> AddKeyPoint(long tourId)
+    {
+        return await ForwardRequest("tours", $"api/tours/{tourId}/key-points", HttpMethod.Post, includeAuth: true);
+    }
+
+    [HttpPost("tours/{tourId}/transport-times")]
+    [Authorize(Policy = "authorPolicy")]
+    public async Task<IActionResult> AddTransportTime(long tourId)
+    {
+        return await ForwardRequest("tours", $"api/tours/{tourId}/transport-times", HttpMethod.Post, includeAuth: true);
     }
 
     private async Task<IActionResult> ForwardRequest(string serviceName, string path, HttpMethod method, bool includeAuth = false)

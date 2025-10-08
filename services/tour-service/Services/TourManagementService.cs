@@ -15,19 +15,22 @@ public class TourManagementService : ITourService
     private readonly TourContext _context;
     private readonly IMapper _mapper;
     private readonly ILogger<TourManagementService> _logger;
+    private readonly ITourValidationService _validationService;
 
     public TourManagementService(
         ITourRepository tourRepository,
         ITagRepository tagRepository,
         TourContext context,
         IMapper mapper,
-        ILogger<TourManagementService> logger)
+        ILogger<TourManagementService> logger,
+        ITourValidationService validationService)
     {
         _tourRepository = tourRepository;
         _tagRepository = tagRepository;
         _context = context;
         _mapper = mapper;
         _logger = logger;
+        _validationService = validationService;
     }
 
     public async Task<Result<TourDto>> CreateTourAsync(CreateTourRequestDto request, long authorId)
@@ -58,6 +61,28 @@ public class TourManagementService : ITourService
             {
                 await _tourRepository.DeleteAsync(createdTour.Id);
                 return Result.Fail(tagsResult.Errors);
+            }
+
+            // Process key points
+            if (request.KeyPoints != null && request.KeyPoints.Any())
+            {
+                var keyPointsResult = await ProcessKeyPointsAsync(request.KeyPoints, createdTour.Id);
+                if (keyPointsResult.IsFailed)
+                {
+                    await _tourRepository.DeleteAsync(createdTour.Id);
+                    return Result.Fail(keyPointsResult.Errors);
+                }
+            }
+
+            // Process transport times
+            if (request.TransportTimes != null && request.TransportTimes.Any())
+            {
+                var transportTimesResult = await ProcessTransportTimesAsync(request.TransportTimes, createdTour.Id);
+                if (transportTimesResult.IsFailed)
+                {
+                    await _tourRepository.DeleteAsync(createdTour.Id);
+                    return Result.Fail(transportTimesResult.Errors);
+                }
             }
 
             var completeTourResult = await _tourRepository.GetByIdAsync(createdTour.Id);
@@ -155,6 +180,30 @@ public class TourManagementService : ITourService
         }
     }
 
+    public async Task<Result<List<TourDto>>> GetPublicToursAsync()
+    {
+        try
+        {
+            var toursResult = await _tourRepository.GetPublishedToursAsync();
+            if (toursResult.IsFailed)
+            {
+                return Result.Fail(toursResult.Errors);
+            }
+
+            var tourDtos = _mapper.Map<List<TourDto>>(toursResult.Value);
+            
+            _logger.LogInformation("Pronađeno {Count} javnih tura", tourDtos.Count);
+            
+            return Result.Ok(tourDtos);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Greška pri preuzimanju javnih tura");
+            return Result.Fail(new Error(FailureCode.DatabaseError)
+                .WithMetadata("exception", ex.Message));
+        }
+    }
+
     private async Task<Result> ProcessTagsAsync(List<string> tagNames, long tourId)
     {
         try
@@ -193,6 +242,262 @@ public class TourManagementService : ITourService
                     TagId = tag.Id
                 };
                 _context.TourTags.Add(tourTag);
+            }
+
+            await _context.SaveChangesAsync();
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail(new Error(FailureCode.DatabaseError)
+                .WithMetadata("exception", ex.Message));
+        }
+    }
+
+    public async Task<Result<TourDto>> AddKeyPointAsync(long tourId, CreateTourKeyPointRequestDto keyPointDto, long authorId)
+    {
+        try
+        {
+            var tourResult = await _tourRepository.GetByIdAsync(tourId);
+            if (tourResult.IsFailed || tourResult.Value == null)
+            {
+                return Result.Fail(new Error(FailureCode.NotFound)
+                    .WithMetadata("message", $"Tura sa ID {tourId} nije pronađena"));
+            }
+
+            var tour = tourResult.Value;
+            if (tour.AuthorId != authorId)
+            {
+                return Result.Fail(new Error(FailureCode.Forbidden)
+                    .WithMetadata("message", "Nemate dozvolu za izmenu ove ture"));
+            }
+
+            var keyPoint = _mapper.Map<TourKeyPoint>(keyPointDto);
+            keyPoint.TourId = tourId;
+            keyPoint.Order = tour.KeyPoints.Count + 1;
+
+            _context.TourKeyPoints.Add(keyPoint);
+            await _context.SaveChangesAsync();
+
+            var updatedTourResult = await _tourRepository.GetByIdAsync(tourId);
+            if (updatedTourResult.IsFailed || updatedTourResult.Value == null)
+            {
+                return Result.Fail(new Error(FailureCode.DatabaseError)
+                    .WithMetadata("message", "Greška pri učitavanju ažurirane ture"));
+            }
+
+            var tourDto = _mapper.Map<TourDto>(updatedTourResult.Value);
+            return Result.Ok(tourDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Greška pri dodavanju ključne tačke u turu {TourId}", tourId);
+            return Result.Fail(new Error(FailureCode.DatabaseError)
+                .WithMetadata("exception", ex.Message));
+        }
+    }
+
+    public async Task<Result<TourDto>> AddTransportTimeAsync(long tourId, CreateTourTransportTimeRequestDto transportTimeDto, long authorId)
+    {
+        try
+        {
+            var tourResult = await _tourRepository.GetByIdAsync(tourId);
+            if (tourResult.IsFailed || tourResult.Value == null)
+            {
+                return Result.Fail(new Error(FailureCode.NotFound)
+                    .WithMetadata("message", $"Tura sa ID {tourId} nije pronađena"));
+            }
+
+            var tour = tourResult.Value;
+            if (tour.AuthorId != authorId)
+            {
+                return Result.Fail(new Error(FailureCode.Forbidden)
+                    .WithMetadata("message", "Nemate dozvolu za izmenu ove ture"));
+            }
+
+            // Check if transport type already exists
+            var transportType = (TransportType)transportTimeDto.TransportType;
+            if (tour.TransportTimes.Any(tt => tt.TransportType == transportType))
+            {
+                return Result.Fail(new Error(FailureCode.ValidationError)
+                    .WithMetadata("message", $"Vreme prevoza za {transportType} već postoji"));
+            }
+
+            var transportTime = _mapper.Map<TourTransportTime>(transportTimeDto);
+            transportTime.TourId = tourId;
+
+            _context.TourTransportTimes.Add(transportTime);
+            await _context.SaveChangesAsync();
+
+            var updatedTourResult = await _tourRepository.GetByIdAsync(tourId);
+            if (updatedTourResult.IsFailed || updatedTourResult.Value == null)
+            {
+                return Result.Fail(new Error(FailureCode.DatabaseError)
+                    .WithMetadata("message", "Greška pri učitavanju ažurirane ture"));
+            }
+
+            var tourDto = _mapper.Map<TourDto>(updatedTourResult.Value);
+            return Result.Ok(tourDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Greška pri dodavanju vremena prevoza u turu {TourId}", tourId);
+            return Result.Fail(new Error(FailureCode.DatabaseError)
+                .WithMetadata("exception", ex.Message));
+        }
+    }
+
+    public async Task<Result<TourDto>> PublishTourAsync(long tourId, long authorId)
+    {
+        try
+        {
+            var tourResult = await _tourRepository.GetByIdAsync(tourId);
+            if (tourResult.IsFailed || tourResult.Value == null)
+            {
+                return Result.Fail(new Error(FailureCode.NotFound)
+                    .WithMetadata("message", $"Tura sa ID {tourId} nije pronađena"));
+            }
+
+            var tour = tourResult.Value;
+            if (tour.AuthorId != authorId)
+            {
+                return Result.Fail(new Error(FailureCode.Forbidden)
+                    .WithMetadata("message", "Nemate dozvolu za izmenu ove ture"));
+            }
+
+            var canPublish = await _validationService.CanPublishTourAsync(tour);
+            if (!canPublish)
+            {
+                return Result.Fail(new Error(FailureCode.ValidationError)
+                    .WithMetadata("message", "Tura ne ispunjava uslove za objavljivanje"));
+            }
+
+            tour.Status = TourStatus.Published;
+            tour.PublishedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            var tourDto = _mapper.Map<TourDto>(tour);
+            return Result.Ok(tourDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Greška pri objavljivanju ture {TourId}", tourId);
+            return Result.Fail(new Error(FailureCode.DatabaseError)
+                .WithMetadata("exception", ex.Message));
+        }
+    }
+
+    public async Task<Result<TourDto>> ArchiveTourAsync(long tourId, long authorId)
+    {
+        try
+        {
+            var tourResult = await _tourRepository.GetByIdAsync(tourId);
+            if (tourResult.IsFailed || tourResult.Value == null)
+            {
+                return Result.Fail(new Error(FailureCode.NotFound)
+                    .WithMetadata("message", $"Tura sa ID {tourId} nije pronađena"));
+            }
+
+            var tour = tourResult.Value;
+            if (tour.AuthorId != authorId)
+            {
+                return Result.Fail(new Error(FailureCode.Forbidden)
+                    .WithMetadata("message", "Nemate dozvolu za izmenu ove ture"));
+            }
+
+            var canArchive = await _validationService.CanArchiveTourAsync(tour);
+            if (!canArchive)
+            {
+                return Result.Fail(new Error(FailureCode.ValidationError)
+                    .WithMetadata("message", "Samo objavljene ture se mogu arhivirati"));
+            }
+
+            tour.Status = TourStatus.Archived;
+            tour.ArchivedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            var tourDto = _mapper.Map<TourDto>(tour);
+            return Result.Ok(tourDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Greška pri arhiviranju ture {TourId}", tourId);
+            return Result.Fail(new Error(FailureCode.DatabaseError)
+                .WithMetadata("exception", ex.Message));
+        }
+    }
+
+    public async Task<Result<TourDto>> ActivateTourAsync(long tourId, long authorId)
+    {
+        try
+        {
+            var tourResult = await _tourRepository.GetByIdAsync(tourId);
+            if (tourResult.IsFailed || tourResult.Value == null)
+            {
+                return Result.Fail(new Error(FailureCode.NotFound)
+                    .WithMetadata("message", $"Tura sa ID {tourId} nije pronađena"));
+            }
+
+            var tour = tourResult.Value;
+            if (tour.AuthorId != authorId)
+            {
+                return Result.Fail(new Error(FailureCode.Forbidden)
+                    .WithMetadata("message", "Nemate dozvolu za izmenu ove ture"));
+            }
+
+            var canActivate = await _validationService.CanActivateTourAsync(tour);
+            if (!canActivate)
+            {
+                return Result.Fail(new Error(FailureCode.ValidationError)
+                    .WithMetadata("message", "Samo arhivirane ture se mogu aktivirati"));
+            }
+
+            tour.Status = TourStatus.Published;
+            tour.ArchivedAt = null;
+            await _context.SaveChangesAsync();
+
+            var tourDto = _mapper.Map<TourDto>(tour);
+            return Result.Ok(tourDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Greška pri aktiviranju ture {TourId}", tourId);
+            return Result.Fail(new Error(FailureCode.DatabaseError)
+                .WithMetadata("exception", ex.Message));
+        }
+    }
+
+    private async Task<Result> ProcessKeyPointsAsync(List<CreateTourKeyPointRequestDto> keyPoints, long tourId)
+    {
+        try
+        {
+            for (int i = 0; i < keyPoints.Count; i++)
+            {
+                var keyPoint = _mapper.Map<TourKeyPoint>(keyPoints[i]);
+                keyPoint.TourId = tourId;
+                keyPoint.Order = i + 1;
+                _context.TourKeyPoints.Add(keyPoint);
+            }
+
+            await _context.SaveChangesAsync();
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail(new Error(FailureCode.DatabaseError)
+                .WithMetadata("exception", ex.Message));
+        }
+    }
+
+    private async Task<Result> ProcessTransportTimesAsync(List<CreateTourTransportTimeRequestDto> transportTimes, long tourId)
+    {
+        try
+        {
+            foreach (var transportTimeDto in transportTimes)
+            {
+                var transportTime = _mapper.Map<TourTransportTime>(transportTimeDto);
+                transportTime.TourId = tourId;
+                _context.TourTransportTimes.Add(transportTime);
             }
 
             await _context.SaveChangesAsync();

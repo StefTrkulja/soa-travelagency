@@ -38,6 +38,8 @@ public class TourRepository : ITourRepository
             var tour = await _context.Tours
                 .Include(t => t.TourTags)
                 .ThenInclude(tt => tt.Tag)
+                .Include(t => t.KeyPoints)
+                .Include(t => t.TransportTimes)
                 .FirstOrDefaultAsync(t => t.Id == id);
             
             return Result.Ok(tour);
@@ -56,6 +58,8 @@ public class TourRepository : ITourRepository
             var tours = await _context.Tours
                 .Include(t => t.TourTags)
                 .ThenInclude(tt => tt.Tag)
+                .Include(t => t.KeyPoints)
+                .Include(t => t.TransportTimes)
                 .Where(t => t.AuthorId == authorId)
                 .OrderByDescending(t => t.CreatedAt)
                 .ToListAsync();
@@ -76,7 +80,31 @@ public class TourRepository : ITourRepository
             var tours = await _context.Tours
                 .Include(t => t.TourTags)
                 .ThenInclude(tt => tt.Tag)
+                .Include(t => t.KeyPoints)
+                .Include(t => t.TransportTimes)
                 .OrderByDescending(t => t.CreatedAt)
+                .ToListAsync();
+            
+            return Result.Ok(tours);
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail(new Error(FailureCode.DatabaseError)
+                .WithMetadata("exception", ex.Message));
+        }
+    }
+
+    public async Task<Result<List<Tour>>> GetPublishedToursAsync()
+    {
+        try
+        {
+            var tours = await _context.Tours
+                .Include(t => t.TourTags)
+                .ThenInclude(tt => tt.Tag)
+                .Include(t => t.KeyPoints)
+                .Include(t => t.TransportTimes)
+                .Where(t => t.Status == TourStatus.Published)
+                .OrderByDescending(t => t.PublishedAt)
                 .ToListAsync();
             
             return Result.Ok(tours);
