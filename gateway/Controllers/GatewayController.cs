@@ -82,6 +82,13 @@ public class GatewayController : ControllerBase
         return await ForwardRequest("stakeholders", "api/profile", HttpMethod.Put, includeAuth: true);
     }
 
+    [HttpPut("stakeholders/profile/password")]
+    [Authorize]
+    public async Task<IActionResult> UpdateMyPassword()
+    {
+        return await ForwardRequest("stakeholders", "api/profile/password", HttpMethod.Put, includeAuth: true);
+    }
+
     [HttpPost("tours")]
     [Authorize(Policy = "authorPolicy")]
     public async Task<IActionResult> CreateTour()

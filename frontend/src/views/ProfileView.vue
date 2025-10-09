@@ -45,7 +45,7 @@
 
     <!-- Profile Content -->
     <v-row v-if="!loading && profile" class="mt-4">
-      <v-col cols="12" md="8" lg="6">
+      <v-col cols="12" md="8" lg="10">
         <v-card class="profile-card" elevation="4">
           <v-card-title class="text-h5 pa-6 pb-4">
             <v-icon icon="mdi-account-circle" class="mr-3" size="large"></v-icon>
@@ -80,81 +80,72 @@
               <!-- Username (Read-only) -->
               <v-text-field
                 label="Username"
-                :model-value="profile.Username"
+                :model-value="profile.username"
                 prepend-icon="mdi-account"
                 readonly
                 variant="outlined"
                 class="mb-4"
               ></v-text-field>
 
-              <!-- Email (Read-only) -->
+              <!-- Email -->
               <v-text-field
+                v-model="editForm.Email"
                 label="Email"
-                :model-value="profile.Email"
                 prepend-icon="mdi-email"
-                readonly
+                :readonly="!isEditing"
                 variant="outlined"
+                :rules="emailRules"
                 class="mb-4"
               ></v-text-field>
 
               <!-- Role (Read-only) -->
               <v-text-field
                 label="Role"
-                :model-value="profile.Role"
+                :model-value="profile.role"
                 prepend-icon="mdi-account-group"
                 readonly
                 variant="outlined"
                 class="mb-4"
               ></v-text-field>
 
-              <!-- Name -->
-              <v-text-field
-                v-model="editForm.Name"
-                label="First Name"
-                prepend-icon="mdi-account"
-                :readonly="!isEditing"
-                variant="outlined"
-                :rules="nameRules"
-                class="mb-4"
-              ></v-text-field>
+              <!-- Password Change Section -->
+              <v-expansion-panels v-if="isEditing" class="mb-4">
+                <v-expansion-panel>
+                  <v-expansion-panel-title>
+                    <v-icon icon="mdi-lock" class="mr-2"></v-icon>
+                    Change Password
+                  </v-expansion-panel-title>
+                  <v-expansion-panel-text>
+                    <v-text-field
+                      v-model="passwordForm.currentPassword"
+                      label="Current Password"
+                      prepend-icon="mdi-lock"
+                      type="password"
+                      variant="outlined"
+                      :rules="passwordRules"
+                      class="mb-3"
+                    ></v-text-field>
+                    <v-text-field
+                      v-model="passwordForm.newPassword"
+                      label="New Password"
+                      prepend-icon="mdi-lock-outline"
+                      type="password"
+                      variant="outlined"
+                      :rules="newPasswordRules"
+                      class="mb-3"
+                    ></v-text-field>
+                    <v-text-field
+                      v-model="passwordForm.confirmPassword"
+                      label="Confirm New Password"
+                      prepend-icon="mdi-lock-check"
+                      type="password"
+                      variant="outlined"
+                      :rules="confirmNewPasswordRules"
+                    ></v-text-field>
+                  </v-expansion-panel-text>
+                </v-expansion-panel>
+              </v-expansion-panels>
 
-              <!-- Surname -->
-              <v-text-field
-                v-model="editForm.Surname"
-                label="Last Name"
-                prepend-icon="mdi-account"
-                :readonly="!isEditing"
-                variant="outlined"
-                :rules="surnameRules"
-                class="mb-4"
-              ></v-text-field>
-
-              <!-- Biography -->
-              <v-textarea
-                v-model="editForm.Biography"
-                label="Biography"
-                prepend-icon="mdi-text"
-                :readonly="!isEditing"
-                variant="outlined"
-                rows="4"
-                :rules="biographyRules"
-                class="mb-4"
-                hint="Tell us about yourself..."
-                persistent-hint
-              ></v-textarea>
-
-              <!-- Motto -->
-              <v-text-field
-                v-model="editForm.Motto"
-                label="Motto"
-                prepend-icon="mdi-quote"
-                :readonly="!isEditing"
-                variant="outlined"
-                :rules="mottoRules"
-                class="mb-4"
-                hint="Your personal motto or favorite quote"
-                persistent-hint
-              ></v-text-field>
             </v-form>
           </v-card-text>
 
@@ -181,32 +172,6 @@
         </v-card>
       </v-col>
 
-      <!-- Additional Info Card -->
-      <v-col cols="12" md="4" lg="6">
-        <v-card class="info-card" elevation="2">
-          <v-card-title class="text-h6 pa-4">
-            <v-icon icon="mdi-information" class="mr-2"></v-icon>
-            Account Information
-          </v-card-title>
-          <v-card-text class="pa-4">
-            <div class="info-item mb-3">
-              <v-icon icon="mdi-calendar" size="small" class="mr-2 text-grey"></v-icon>
-              <span class="text-caption text-grey-darken-1">Member since:</span>
-              <div class="text-body-2">{{ formatDate(new Date()) }}</div>
-            </div>
-            <div class="info-item mb-3">
-              <v-icon icon="mdi-shield-check" size="small" class="mr-2 text-grey"></v-icon>
-              <span class="text-caption text-grey-darken-1">Account Status:</span>
-              <div class="text-body-2 text-success">Active</div>
-            </div>
-            <div class="info-item">
-              <v-icon icon="mdi-account-group" size="small" class="mr-2 text-grey"></v-icon>
-              <span class="text-caption text-grey-darken-1">Role:</span>
-              <div class="text-body-2">{{ profile.Role }}</div>
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
     </v-row>
   </v-container>
 </template>
@@ -232,23 +197,34 @@ export default {
       successSnackbar: false,
       successMessage: '',
       editForm: {
-        Name: '',
-        Surname: '',
-        ProfilePicture: '',
-        Biography: '',
-        Motto: ''
+        Email: ''
       },
-      nameRules: [
-        v => !v || v.length <= 50 || 'Name must be less than 50 characters'
+      passwordForm: {
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      },
+      emailRules: [
+        v => !!v || 'Email is required',
+        v => /.+@.+\..+/.test(v) || 'Email must be valid'
       ],
-      surnameRules: [
-        v => !v || v.length <= 50 || 'Surname must be less than 50 characters'
+      passwordRules: [
+        v => !!v || 'Current password is required'
       ],
-      biographyRules: [
-        v => !v || v.length <= 500 || 'Biography must be less than 500 characters'
+      newPasswordRules: [
+        v => {
+          if (!v && !this.passwordForm.confirmPassword) return true;
+          if (!v) return 'New password is required';
+          return v.length >= 6 || 'New password must be at least 6 characters';
+        }
       ],
-      mottoRules: [
-        v => !v || v.length <= 200 || 'Motto must be less than 200 characters'
+      confirmNewPasswordRules: [
+        v => {
+          if (!v && !this.passwordForm.newPassword) return true;
+          if (!v) return 'Please confirm your new password';
+          if (!this.passwordForm.newPassword) return 'Please enter a new password first';
+          return v === this.passwordForm.newPassword || 'Passwords must match';
+        }
       ]
     };
   },
@@ -259,7 +235,22 @@ export default {
 
       try {
         const response = await axios.get('/stakeholders/profile');
-        this.profile = response.data;
+        // Explicitly set profile object to ensure reactivity
+        this.profile = {
+          id: response.data.id,
+          username: response.data.username,
+          email: response.data.email,
+          role: response.data.role,
+          name: response.data.name,
+          surname: response.data.surname,
+          profilePicture: response.data.profilePicture,
+          biography: response.data.biography,
+          motto: response.data.motto
+        };
+        //console.log('Profile data:', this.profile);
+        //console.log('Profile email:', this.profile.email);
+        //console.log('Profile username:', this.profile.username);
+        //console.log('Profile role:', this.profile.role);
         this.populateEditForm();
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -270,11 +261,19 @@ export default {
     },
     populateEditForm() {
       this.editForm = {
-        Name: this.profile.Name || '',
-        Surname: this.profile.Surname || '',
-        ProfilePicture: this.profile.ProfilePicture || '',
-        Biography: this.profile.Biography || '',
-        Motto: this.profile.Motto || ''
+        Email: this.profile.email || ''
+      };
+      this.passwordForm = {
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      };
+    },
+    resetPasswordForm() {
+      this.passwordForm = {
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
       };
     },
     startEditing() {
@@ -284,6 +283,7 @@ export default {
     cancelEditing() {
       this.isEditing = false;
       this.populateEditForm();
+      this.resetPasswordForm();
       this.errorMessage = '';
     },
     async saveProfile() {
@@ -293,9 +293,24 @@ export default {
       this.errorMessage = '';
 
       try {
-        const response = await axios.put('/stakeholders/profile', this.editForm);
+        // Update email
+        const profileData = {
+          Email: this.editForm.Email
+        };
+        
+        const response = await axios.put('/stakeholders/profile', profileData);
         this.profile = response.data;
+        
+        // Update password if provided
+        if (this.passwordForm.newPassword) {
+          await axios.put('/stakeholders/profile/password', {
+            currentPassword: this.passwordForm.currentPassword,
+            newPassword: this.passwordForm.newPassword
+          });
+        }
+        
         this.isEditing = false;
+        this.resetPasswordForm();
         this.successMessage = 'Profile updated successfully!';
         this.successSnackbar = true;
       } catch (error) {
@@ -309,13 +324,6 @@ export default {
       // TODO: Implement profile picture upload
       this.successMessage = 'Profile picture upload feature coming soon!';
       this.successSnackbar = true;
-    },
-    formatDate(date) {
-      return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
     }
   },
   mounted() {

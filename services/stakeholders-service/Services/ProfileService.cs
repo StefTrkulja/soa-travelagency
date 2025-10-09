@@ -40,6 +40,7 @@ namespace StakeholdersService.Services
             {
                 var updatedUser = _userRepository.UpdateUserProfile(
                     userId,
+                    updateProfileDto.Email,
                     updateProfileDto.Name,
                     updateProfileDto.Surname,
                     updateProfileDto.ProfilePicture,
@@ -52,6 +53,34 @@ namespace StakeholdersService.Services
             }
             catch (ArgumentException ex)
             {
+                return Result.Fail(FailureCode.NotFound).WithError(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return Result.Fail(FailureCode.InvalidArgument).WithError(ex.Message);
+            }
+        }
+
+        public Result<UserProfileDto> UpdatePassword(long userId, ChangePasswordDto changePasswordDto)
+        {
+            try
+            {
+                var updatedUser = _userRepository.UpdatePassword(
+                    userId,
+                    changePasswordDto.CurrentPassword,
+                    changePasswordDto.NewPassword
+                );
+
+                var profileDto = _mapper.Map<UserProfileDto>(updatedUser);
+                return Result.Ok(profileDto);
+            }
+            catch (ArgumentException ex)
+            {
+                // Check if it's a password validation error or user not found error
+                if (ex.Message.Contains("password", StringComparison.OrdinalIgnoreCase))
+                {
+                    return Result.Fail(FailureCode.InvalidArgument).WithError(ex.Message);
+                }
                 return Result.Fail(FailureCode.NotFound).WithError(ex.Message);
             }
             catch (Exception ex)

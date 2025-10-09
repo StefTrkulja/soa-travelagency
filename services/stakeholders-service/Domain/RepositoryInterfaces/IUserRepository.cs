@@ -13,7 +13,9 @@
         User UnblockUser(long userId);
         bool IsUserBlocked(long userId);
         User? GetUserProfile(long userId);
-        User UpdateUserProfile(long userId, string? name, string? surname, string? profilePicture, string? biography, string? motto);
+        User UpdateUserProfile(long userId, string email, string? name, string? surname, string? profilePicture, string? biography, string? motto);
+        User UpdatePassword(long userId, string currentPassword, string newPassword);
+        User UpdateEmail(long userId, string email);
         List<User> GetAllUsers();
     }
 }
