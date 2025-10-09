@@ -27,6 +27,20 @@ namespace StakeholdersService.Mapping
                 .ForMember(d => d.Biography, opt => opt.MapFrom(s => s.Biography))
                 .ForMember(d => d.Motto, opt => opt.MapFrom(s => s.Motto));
 
+            // UpdateProfileDto -> User (for mapping updates)
+            CreateMap<UpdateProfileDto, User>()
+                .ForMember(d => d.Email, opt => opt.MapFrom(s => s.Email))
+                .ForMember(d => d.Username, opt => opt.Ignore())
+                .ForMember(d => d.Password, opt => opt.Ignore())
+                .ForMember(d => d.Role, opt => opt.Ignore())
+                .ForMember(d => d.Blocked, opt => opt.Ignore())
+                .ForMember(d => d.Id, opt => opt.Ignore())
+                .ForMember(d => d.Name, opt => opt.MapFrom(s => s.Name))
+                .ForMember(d => d.Surname, opt => opt.MapFrom(s => s.Surname))
+                .ForMember(d => d.ProfilePicture, opt => opt.MapFrom(s => s.ProfilePicture))
+                .ForMember(d => d.Biography, opt => opt.MapFrom(s => s.Biography))
+                .ForMember(d => d.Motto, opt => opt.MapFrom(s => s.Motto));
+
         }
     }
 }

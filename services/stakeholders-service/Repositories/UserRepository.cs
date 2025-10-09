@@ -96,13 +96,39 @@ namespace StakeholdersService.Repositories
             return _dbContext.Users.FirstOrDefault(u => u.Id == userId);
         }
 
-        public User UpdateUserProfile(long userId, string? name, string? surname, string? profilePicture, string? biography, string? motto)
+        public User UpdateUserProfile(long userId, string email, string? name, string? surname, string? profilePicture, string? biography, string? motto)
         {
             var user = _dbContext.Users.FirstOrDefault(u => u.Id == userId);
             if (user == null)
                 throw new ArgumentException($"User with ID {userId} not found");
 
+            user.Email = email;
             user.UpdateProfile(name, surname, profilePicture, biography, motto);
+            _dbContext.SaveChanges();
+            return user;
+        }
+
+        public User UpdatePassword(long userId, string currentPassword, string newPassword)
+        {
+            var user = _dbContext.Users.FirstOrDefault(u => u.Id == userId);
+            if (user == null)
+                throw new ArgumentException($"User with ID {userId} not found");
+
+            if (user.Password != currentPassword)
+                throw new ArgumentException("Current password is incorrect");
+
+            user.Password = newPassword;
+            _dbContext.SaveChanges();
+            return user;
+        }
+
+        public User UpdateEmail(long userId, string email)
+        {
+            var user = _dbContext.Users.FirstOrDefault(u => u.Id == userId);
+            if (user == null)
+                throw new ArgumentException($"User with ID {userId} not found");
+
+            user.Email = email;
             _dbContext.SaveChanges();
             return user;
         }

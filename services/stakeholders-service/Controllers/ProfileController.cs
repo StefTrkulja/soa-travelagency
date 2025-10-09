@@ -41,6 +41,14 @@ namespace StakeholdersService.Controllers
             return CreateResponse(result);
         }
 
+        [HttpPut("password")]
+        public ActionResult<UserProfileDto> UpdateMyPassword([FromBody] ChangePasswordDto changePasswordDto)
+        {
+            var userId = GetCurrentUserId();
+            var result = _profileService.UpdatePassword(userId, changePasswordDto);
+            return CreateResponse(result);
+        }
+
         [HttpGet("all")]
         public ActionResult<List<UserProfileDto>> GetAllUsers()
         {
