@@ -81,6 +81,14 @@ builder.Services.AddSingleton(serviceEndpoints);
 builder.Services.AddHttpClient<IServiceProxy, ServiceProxy>();
 builder.Services.AddScoped<IServiceProxy, ServiceProxy>();
 
+// gRPC Configuration
+var followerGrpcUrl = Environment.GetEnvironmentVariable("FOLLOWER_GRPC_URL") ?? "http://localhost:9091";
+builder.Services.AddGrpcClient<Gateway.Grpc.FollowerService.FollowerServiceClient>(options =>
+{
+    options.Address = new Uri(followerGrpcUrl);
+});
+builder.Services.AddScoped<IFollowerGrpcClient, FollowerGrpcClient>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment() ||

@@ -1,0 +1,31 @@
+### Test gRPC Follow/Unfollow Endpoints
+### Prvo se ulogujte da dobijete token
+
+### 1. Login
+POST http://localhost:5000/api/gateway/stakeholders/users/login
+Content-Type: application/json
+
+{
+  "username": "vukasin",
+  "password": "password123"
+}
+
+### 2. Test Follow User (koristiti ID iz prethodnog odgovora)
+POST http://localhost:5000/api/gateway/followers/1/follow
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+### 3. Test Unfollow User
+POST http://localhost:5000/api/gateway/followers/1/unfollow
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+### 4. Test Follow Same User Again (should fail)
+POST http://localhost:5000/api/gateway/followers/1/follow
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+### 5. Test Follow Self (should fail)
+POST http://localhost:5000/api/gateway/followers/3/follow
+Authorization: Bearer {{token}}
+Content-Type: application/json
