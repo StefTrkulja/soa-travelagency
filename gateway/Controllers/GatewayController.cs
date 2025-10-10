@@ -13,11 +13,13 @@ namespace Gateway.Controllers;
 public class GatewayController : ControllerBase
 {
     private readonly IServiceProxy _serviceProxy;
+    private readonly IFollowerGrpcClient _followerGrpcClient;
     private readonly ILogger<GatewayController> _logger;
 
-    public GatewayController(IServiceProxy serviceProxy, ILogger<GatewayController> logger)
+    public GatewayController(IServiceProxy serviceProxy, IFollowerGrpcClient followerGrpcClient, ILogger<GatewayController> logger)
     {
         _serviceProxy = serviceProxy;
+        _followerGrpcClient = followerGrpcClient;
         _logger = logger;
     }
 
@@ -144,19 +146,67 @@ public class GatewayController : ControllerBase
         return await ForwardRequestWithUserId("blogs", $"api/blogs/{id}", HttpMethod.Delete, includeAuth: true);
     }
 
-    // Follower service endpoints
+    // Follower service endpoints - using gRPC
     [HttpPost("followers/{id:long}/follow")]
     [Authorize]
     public async Task<IActionResult> FollowUser(long id)
     {
-        return await ForwardFollowRequest("followers", "api/followers/follow", HttpMethod.Post, id, includeAuth: true);
+        try
+        {
+            var followerId = ExtractUserIdFromJwt(ExtractTokenFromHeader());
+            
+            _logger.LogInformation("=== GRPC FOLLOW REQUEST START ===");
+            _logger.LogInformation("Calling gRPC FollowUser: followerId={}, followedId={}", followerId, id);
+            
+            var response = await _followerGrpcClient.FollowUserAsync(followerId, id);
+            
+            _logger.LogInformation("gRPC FollowUser response: success={}, message={}", 
+                response.Success, response.Message);
+            
+            var result = new
+            {
+                success = response.Success,
+                message = response.Message
+            };
+            
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in gRPC FollowUser");
+            return StatusCode(500, new { message = "Internal server error" });
+        }
     }
 
     [HttpPost("followers/{id:long}/unfollow")]
     [Authorize]
     public async Task<IActionResult> UnfollowUser(long id)
     {
-        return await ForwardFollowRequest("followers", "api/followers/unfollow", HttpMethod.Post, id, includeAuth: true);
+        try
+        {
+            var followerId = ExtractUserIdFromJwt(ExtractTokenFromHeader());
+            
+            _logger.LogInformation("=== GRPC UNFOLLOW REQUEST START ===");
+            _logger.LogInformation("Calling gRPC UnfollowUser: followerId={}, followedId={}", followerId, id);
+            
+            var response = await _followerGrpcClient.UnfollowUserAsync(followerId, id);
+            
+            _logger.LogInformation("gRPC UnfollowUser response: success={}, message={}", 
+                response.Success, response.Message);
+            
+            var result = new
+            {
+                success = response.Success,
+                message = response.Message
+            };
+            
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in gRPC UnfollowUser");
+            return StatusCode(500, new { message = "Internal server error" });
+        }
     }
 
     [HttpGet("followers/{id:long}/following")]

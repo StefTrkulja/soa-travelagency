@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package follower;
+
+option java_multiple_files = true;
+option java_package = "com.example.follower.follower_microservice.grpc";
+option java_outer_classname = "FollowerServiceProto";
+
+// FollowUser Request
+message FollowUserRequest {
+  int64 follower_id = 1;
+  int64 followed_id = 2;
+}
+
+// FollowUser Response
+message FollowUserResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// UnfollowUser Request
+message UnfollowUserRequest {
+  int64 follower_id = 1;
+  int64 followed_id = 2;
+}
+
+// UnfollowUser Response
+message UnfollowUserResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Follower Service Definition
+service FollowerService {
+  rpc FollowUser(FollowUserRequest) returns (FollowUserResponse);
+  rpc UnfollowUser(UnfollowUserRequest) returns (UnfollowUserResponse);
+}
