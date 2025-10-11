@@ -1,0 +1,46 @@
+### Health Check
+GET {{baseUrl}}/healthz
+
+### Get All Purchases (Admin required)
+GET {{baseUrl}}/api/Purchase
+Authorization: Bearer {{token}}
+
+### Create Purchase
+POST {{baseUrl}}/api/Purchase
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "tourId": 1,
+  "tourName": "Sample Tour",
+  "price": 299.99,
+  "purchaseDate": "2024-12-01T10:00:00Z"
+}
+
+### Get Purchase by ID
+GET {{baseUrl}}/api/Purchase/{{purchaseId}}
+
+### Get User Purchases
+GET {{baseUrl}}/api/Purchase/user/1
+Authorization: Bearer {{token}}
+
+### Get Tour Purchases
+GET {{baseUrl}}/api/Purchase/tour/1
+
+### Update Purchase Status
+PATCH {{baseUrl}}/api/Purchase/{{purchaseId}}/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": 1
+}
+
+### Delete Purchase
+DELETE {{baseUrl}}/api/Purchase/{{purchaseId}}
+Authorization: Bearer {{token}}
+
+@baseUrl = http://localhost:5005
+@token = your_jwt_token_here
+@purchaseId = purchase_id_here
