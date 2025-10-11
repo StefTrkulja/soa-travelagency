@@ -5,6 +5,17 @@
 			Travel Agency
 		</v-btn>
 		<v-spacer></v-spacer>
+		<v-btn 
+			size="large" 
+			prepend-icon="mdi-logout" 
+			variant="outlined" 
+			color="white"
+			class="mr-3 logout-btn"
+			v-if="store.role !== 'guest'" 
+			@click="logout"
+		>
+			Logout
+		</v-btn>
 		<v-btn icon="mdi-menu" @click="drawer = !drawer" v-if="store.role !== 'guest'">
 		</v-btn>
 		<v-btn size="large" prepend-icon="mdi-login" v-if="store.role === 'guest'" to="/login">Login</v-btn>
@@ -105,5 +116,16 @@ export default {
 	border-radius: 8px;
 	color: #BBDEFB;
 	cursor: pointer;
+}
+
+.v-btn.logout-btn {
+	border: 1px solid rgba(255, 255, 255, 0.7);
+	color: white;
+	transition: all 0.3s ease;
+}
+
+.v-btn.logout-btn:hover {
+	background-color: rgba(255, 255, 255, 0.1);
+	border-color: white;
 }
 </style>

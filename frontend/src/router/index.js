@@ -57,6 +57,12 @@ const routes = [
     component: UsersView,
     meta: { requiresAuth: true }
   },
+  { 
+    path: '/admin/users', 
+    name: 'AdminUsers', 
+    component: () => import('../views/AdminUsersView.vue'),
+    meta: { requiresAuth: true, role: ['Administrator'] }
+  },
 ];
 
 const router = createRouter({
