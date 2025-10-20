@@ -305,7 +305,7 @@ public class GatewayController : ControllerBase
     [Authorize(Policy = "touristPolicy")]
     public async Task<IActionResult> CreateTourReview()
     {
-        return await ForwardRequest("tours", "api/tourreviews", HttpMethod.Post, includeAuth: true);
+        return await ForwardRequest("tours", "api/TourReviews", HttpMethod.Post, includeAuth: true);
     }
 
     [HttpGet("tours/reviews")]
@@ -320,33 +320,33 @@ public class GatewayController : ControllerBase
             queryString = "?" + string.Join("&", queryParams);
         }
         
-        return await ForwardRequest("tours", $"api/tourreviews{queryString}", HttpMethod.Get);
+        return await ForwardRequest("tours", $"api/TourReviews{queryString}", HttpMethod.Get);
     }
 
     [HttpGet("tours/reviews/{id}")]
     public async Task<IActionResult> GetTourReview(long id)
     {
-        return await ForwardRequest("tours", $"api/tourreviews/{id}", HttpMethod.Get);
+        return await ForwardRequest("tours", $"api/TourReviews/{id}", HttpMethod.Get);
     }
 
     [HttpPut("tours/reviews/{id}")]
     [Authorize(Policy = "touristPolicy")]
     public async Task<IActionResult> UpdateTourReview(long id)
     {
-        return await ForwardRequest("tours", $"api/tourreviews/{id}", HttpMethod.Put, includeAuth: true);
+        return await ForwardRequest("tours", $"api/TourReviews/{id}", HttpMethod.Put, includeAuth: true);
     }
 
     [HttpDelete("tours/reviews/{id}")]
     [Authorize(Policy = "touristPolicy")]
     public async Task<IActionResult> DeleteTourReview(long id)
     {
-        return await ForwardRequest("tours", $"api/tourreviews/{id}", HttpMethod.Delete, includeAuth: true);
+        return await ForwardRequest("tours", $"api/TourReviews/{id}", HttpMethod.Delete, includeAuth: true);
     }
 
     [HttpGet("tours/{tourId}/rating")]
     public async Task<IActionResult> GetTourRating(long tourId)
     {
-        return await ForwardRequest("tours", $"api/tourreviews/tour/{tourId}/rating", HttpMethod.Get);
+        return await ForwardRequest("tours", $"api/TourReviews/tour/{tourId}/rating", HttpMethod.Get);
     }
 
     [HttpGet("tours/reviews/my")]
@@ -362,7 +362,7 @@ public class GatewayController : ControllerBase
             }
             
             var userId = ExtractUserIdFromJwt(token);
-            return await ForwardRequest("tours", $"api/tourreviews?userId={userId}", HttpMethod.Get, includeAuth: true);
+            return await ForwardRequest("tours", $"api/TourReviews?userId={userId}", HttpMethod.Get, includeAuth: true);
         }
         catch (Exception ex)
         {

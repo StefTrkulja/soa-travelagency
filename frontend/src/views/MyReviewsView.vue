@@ -323,7 +323,7 @@ export default {
       this.errorMessage = '';
 
       try {
-        const response = await axios.get('/gateway/tours/reviews/my');
+        const response = await axios.get('/tours/reviews/my');
         this.reviews = response.data;
       } catch (error) {
         console.error('Error fetching reviews:', error);
@@ -371,7 +371,7 @@ export default {
           imageUrl: this.editForm.imageUrl || null
         };
 
-        await axios.put(`/gateway/tours/reviews/${this.selectedReview.id}`, updateData);
+        await axios.put(`/tours/reviews/${this.selectedReview.id}`, updateData);
         
         this.successMessage = 'Review updated successfully!';
         this.closeEditDialog();
@@ -393,7 +393,7 @@ export default {
     async deleteReview() {
       this.deletingReview = true;
       try {
-        await axios.delete(`/gateway/tours/reviews/${this.reviewToDelete.id}`);
+        await axios.delete(`/tours/reviews/${this.reviewToDelete.id}`);
         
         this.successMessage = 'Review deleted successfully!';
         this.deleteDialog = false;
