@@ -300,6 +300,77 @@ public class GatewayController : ControllerBase
         return await ForwardRequest("tours", $"api/tours/{tourId}/transport-times", HttpMethod.Post, includeAuth: true);
     }
 
+    // Tour Reviews endpoints
+    [HttpPost("tours/reviews")]
+    [Authorize(Policy = "touristPolicy")]
+    public async Task<IActionResult> CreateTourReview()
+    {
+        return await ForwardRequest("tours", "api/tourreviews", HttpMethod.Post, includeAuth: true);
+    }
+
+    [HttpGet("tours/reviews")]
+    public async Task<IActionResult> GetTourReviews([FromQuery] long? tourId, [FromQuery] long? userId)
+    {
+        var queryString = "";
+        if (tourId.HasValue || userId.HasValue)
+        {
+            var queryParams = new List<string>();
+            if (tourId.HasValue) queryParams.Add($"tourId={tourId.Value}");
+            if (userId.HasValue) queryParams.Add($"userId={userId.Value}");
+            queryString = "?" + string.Join("&", queryParams);
+        }
+        
+        return await ForwardRequest("tours", $"api/tourreviews{queryString}", HttpMethod.Get);
+    }
+
+    [HttpGet("tours/reviews/{id}")]
+    public async Task<IActionResult> GetTourReview(long id)
+    {
+        return await ForwardRequest("tours", $"api/tourreviews/{id}", HttpMethod.Get);
+    }
+
+    [HttpPut("tours/reviews/{id}")]
+    [Authorize(Policy = "touristPolicy")]
+    public async Task<IActionResult> UpdateTourReview(long id)
+    {
+        return await ForwardRequest("tours", $"api/tourreviews/{id}", HttpMethod.Put, includeAuth: true);
+    }
+
+    [HttpDelete("tours/reviews/{id}")]
+    [Authorize(Policy = "touristPolicy")]
+    public async Task<IActionResult> DeleteTourReview(long id)
+    {
+        return await ForwardRequest("tours", $"api/tourreviews/{id}", HttpMethod.Delete, includeAuth: true);
+    }
+
+    [HttpGet("tours/{tourId}/rating")]
+    public async Task<IActionResult> GetTourRating(long tourId)
+    {
+        return await ForwardRequest("tours", $"api/tourreviews/tour/{tourId}/rating", HttpMethod.Get);
+    }
+
+    [HttpGet("tours/reviews/my")]
+    [Authorize(Policy = "touristPolicy")]
+    public async Task<IActionResult> GetMyTourReviews()
+    {
+        try
+        {
+            var token = ExtractTokenFromHeader();
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized(new { message = "No authentication token provided" });
+            }
+            
+            var userId = ExtractUserIdFromJwt(token);
+            return await ForwardRequest("tours", $"api/tourreviews?userId={userId}", HttpMethod.Get, includeAuth: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user reviews");
+            return StatusCode(500, new { message = "Error retrieving reviews" });
+        }
+    }
+
     private async Task<IActionResult> ForwardRequest(string serviceName, string path, HttpMethod method, bool includeAuth = false)
     {
         try

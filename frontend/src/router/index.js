@@ -5,6 +5,7 @@ import SignUpView from '../views/SignUpView.vue';
 import CreateTourView from '../views/CreateTourView.vue';
 import ToursView from '../views/ToursView.vue';
 import TouristToursView from '../views/TouristToursView.vue';
+import MyReviewsView from '../views/MyReviewsView.vue';
 import ProfileView from '../views/ProfileView.vue';
 import BlogView from '../views/BlogView.vue';
 import CreateBlogView from '../views/CreateBlogView.vue';
@@ -31,6 +32,12 @@ const routes = [
     path: '/tours/public', 
     name: 'PublicTours', 
     component: TouristToursView,
+    meta: { requiresAuth: true, role: ['Tourist'] }
+  },
+  { 
+    path: '/my-reviews', 
+    name: 'MyReviews', 
+    component: MyReviewsView,
     meta: { requiresAuth: true, role: ['Tourist'] }
   },
   { 

@@ -166,28 +166,139 @@
           </v-card-text>
 
           <v-card-actions class="pa-4 pt-0">
-            <v-btn
-              variant="elevated"
-              color="primary"
-              prepend-icon="mdi-eye"
-              @click.stop="viewTourDetails(tour.id)"
-              block
-            >
-              View Details
-            </v-btn>
+            <v-row no-gutters>
+              <v-col cols="12" class="mb-2">
+                <v-btn
+                  variant="elevated"
+                  color="primary"
+                  prepend-icon="mdi-eye"
+                  @click.stop="viewTourDetails(tour.id)"
+                  block
+                >
+                  View Details
+                </v-btn>
+              </v-col>
+              <v-col cols="12" v-if="store.role === 'Tourist'">
+                <v-btn
+                  variant="outlined"
+                  color="success"
+                  prepend-icon="mdi-star-plus"
+                  @click.stop="openReviewDialog(tour)"
+                  block
+                  size="small"
+                >
+                  Add Review
+                </v-btn>
+              </v-col>
+            </v-row>
           </v-card-actions>
         </v-card>
       </v-col>
     </v-row>
+
+    <!-- Review Dialog -->
+    <v-dialog v-model="reviewDialog" max-width="600px" persistent>
+      <v-card>
+        <v-card-title class="text-h5 pa-6 pb-4">
+          <v-icon class="mr-3" color="primary">mdi-star-plus</v-icon>
+          Add Review for "{{ selectedTour?.name }}"
+        </v-card-title>
+
+        <v-card-text class="pa-6 pt-0">
+          <v-form ref="reviewForm" v-model="reviewFormValid">
+            <v-row>
+              <v-col cols="12">
+                <v-textarea
+                  v-model="reviewForm.comment"
+                  label="Your Review Comment"
+                  rows="4"
+                  counter="2000"
+                  maxlength="2000"
+                  :rules="[v => !!v || 'Review comment is required', v => v.length <= 2000 || 'Comment must be less than 2000 characters']"
+                  required
+                  variant="outlined"
+                ></v-textarea>
+              </v-col>
+
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="reviewForm.visitationTime"
+                  label="When did you visit this tour?"
+                  type="datetime-local"
+                  :rules="[v => !!v || 'Visitation time is required']"
+                  required
+                  variant="outlined"
+                ></v-text-field>
+              </v-col>
+
+              <v-col cols="12" md="6">
+                <v-select
+                  v-model="reviewForm.rating"
+                  label="Rating (Optional)"
+                  :items="ratingOptions"
+                  item-title="text"
+                  item-value="value"
+                  variant="outlined"
+                  clearable
+                >
+                  <template v-slot:selection="{ item }">
+                    <v-chip color="warning" size="small">
+                      <v-icon start>mdi-star</v-icon>
+                      {{ item.raw.text }}
+                    </v-chip>
+                  </template>
+                </v-select>
+              </v-col>
+
+              <v-col cols="12">
+                <v-text-field
+                  v-model="reviewForm.imageUrl"
+                  label="Image URL (Optional)"
+                  placeholder="https://example.com/your-image.jpg"
+                  variant="outlined"
+                ></v-text-field>
+              </v-col>
+            </v-row>
+          </v-form>
+        </v-card-text>
+
+        <v-card-actions class="pa-6 pt-0">
+          <v-spacer></v-spacer>
+          <v-btn
+            variant="outlined"
+            @click="closeReviewDialog"
+            :disabled="submittingReview"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+            color="success"
+            variant="elevated"
+            @click="submitReview"
+            :loading="submittingReview"
+            :disabled="!reviewFormValid"
+          >
+            Submit Review
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Debug Info Component -->
+    <DebugInfo />
   </v-container>
 </template>
 
 <script>
 import axios from '@/utils/axiosInstance';
 import { store } from '@/utils/store';
+import DebugInfo from '@/components/DebugInfo.vue';
 
 export default {
   name: 'TouristToursView',
+  components: {
+    DebugInfo
+  },
   computed: {
     store() {
       return store;
@@ -198,7 +309,25 @@ export default {
       tours: [],
       loading: false,
       errorMessage: '',
-      successMessage: ''
+      successMessage: '',
+      // Review dialog
+      reviewDialog: false,
+      reviewFormValid: false,
+      submittingReview: false,
+      selectedTour: null,
+      reviewForm: {
+        comment: '',
+        visitationTime: '',
+        rating: null,
+        imageUrl: ''
+      },
+      ratingOptions: [
+        { text: '1 Star - Poor', value: 1 },
+        { text: '2 Stars - Fair', value: 2 },
+        { text: '3 Stars - Good', value: 3 },
+        { text: '4 Stars - Very Good', value: 4 },
+        { text: '5 Stars - Excellent', value: 5 }
+      ]
     };
   },
   methods: {
@@ -240,6 +369,70 @@ export default {
         minute: '2-digit',
         hour12: false
       });
+    },
+    openReviewDialog(tour) {
+      this.selectedTour = tour;
+      this.reviewDialog = true;
+      // Reset form
+      this.reviewForm = {
+        comment: '',
+        visitationTime: '',
+        rating: null,
+        imageUrl: ''
+      };
+    },
+    closeReviewDialog() {
+      this.reviewDialog = false;
+      this.selectedTour = null;
+      this.reviewFormValid = false;
+    },
+    async submitReview() {
+      if (!this.$refs.reviewForm.validate()) {
+        return;
+      }
+
+      this.submittingReview = true;
+      try {
+        // Get user ID from stored user data or extract from token
+        const userId = this.getUserId();
+        
+        const reviewData = {
+          tourId: this.selectedTour.id,
+          userId: userId,
+          comment: this.reviewForm.comment,
+          visitationTime: new Date(this.reviewForm.visitationTime).toISOString(),
+          rating: this.reviewForm.rating,
+          imageUrl: this.reviewForm.imageUrl || null
+        };
+
+        const response = await axios.post('/tours/reviews', reviewData);
+        
+        this.successMessage = 'Review submitted successfully!';
+        this.closeReviewDialog();
+        
+        // Optionally refresh tours to show updated ratings
+        await this.fetchTours();
+        
+      } catch (error) {
+        console.error('Error submitting review:', error);
+        this.errorMessage = error.response?.data?.message || 'Failed to submit review. Please try again.';
+      } finally {
+        this.submittingReview = false;
+      }
+    },
+    getUserId() {
+      // Get user ID from JWT token stored in localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.id;
+      } catch (error) {
+        throw new Error('Invalid token format');
+      }
     }
   },
   mounted() {

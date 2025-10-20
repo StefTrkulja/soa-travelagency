@@ -31,6 +31,10 @@
 			Available Tours
 		</v-list-item>
 
+		<v-list-item size="large" prepend-icon="mdi-star-box" to="/my-reviews" v-if="store.role === 'Tourist'">
+			My Reviews
+		</v-list-item>
+
 		<v-list-item size="large" prepend-icon="mdi-plus" to="/create-tour" v-if="store.role === 'Author'">
 			Create Tour
 		</v-list-item>

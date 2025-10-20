@@ -40,6 +40,7 @@ public class TourRepository : ITourRepository
                 .ThenInclude(tt => tt.Tag)
                 .Include(t => t.KeyPoints)
                 .Include(t => t.TransportTimes)
+                .Include(t => t.Reviews)
                 .FirstOrDefaultAsync(t => t.Id == id);
             
             return Result.Ok(tour);
@@ -60,6 +61,7 @@ public class TourRepository : ITourRepository
                 .ThenInclude(tt => tt.Tag)
                 .Include(t => t.KeyPoints)
                 .Include(t => t.TransportTimes)
+                .Include(t => t.Reviews)
                 .Where(t => t.AuthorId == authorId)
                 .OrderByDescending(t => t.CreatedAt)
                 .ToListAsync();
@@ -82,6 +84,7 @@ public class TourRepository : ITourRepository
                 .ThenInclude(tt => tt.Tag)
                 .Include(t => t.KeyPoints)
                 .Include(t => t.TransportTimes)
+                .Include(t => t.Reviews)
                 .OrderByDescending(t => t.CreatedAt)
                 .ToListAsync();
             
@@ -103,6 +106,7 @@ public class TourRepository : ITourRepository
                 .ThenInclude(tt => tt.Tag)
                 .Include(t => t.KeyPoints)
                 .Include(t => t.TransportTimes)
+                .Include(t => t.Reviews)
                 .Where(t => t.Status == TourStatus.Published)
                 .OrderByDescending(t => t.PublishedAt)
                 .ToListAsync();

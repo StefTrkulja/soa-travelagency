@@ -19,4 +19,6 @@ public class TourDto
     public List<string> Tags { get; set; } = new List<string>();
     public List<TourKeyPointDto> KeyPoints { get; set; } = new List<TourKeyPointDto>();
     public List<TourTransportTimeDto> TransportTimes { get; set; } = new List<TourTransportTimeDto>();
+    public double? AverageRating { get; set; }
+    public int ReviewCount { get; set; }
 }

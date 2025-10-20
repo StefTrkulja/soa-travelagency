@@ -13,7 +13,12 @@ public class TourProfile : Profile
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
             .ForMember(dest => dest.Tags, opt => opt.MapFrom(src => src.TourTags.Select(tt => tt.Tag.Name).ToList()))
             .ForMember(dest => dest.KeyPoints, opt => opt.MapFrom(src => src.KeyPoints.OrderBy(kp => kp.Order)))
-            .ForMember(dest => dest.TransportTimes, opt => opt.MapFrom(src => src.TransportTimes));
+            .ForMember(dest => dest.TransportTimes, opt => opt.MapFrom(src => src.TransportTimes))
+            .ForMember(dest => dest.AverageRating, opt => opt.MapFrom(src => 
+                src.Reviews.Any(r => r.Rating.HasValue) 
+                    ? src.Reviews.Where(r => r.Rating.HasValue).Average(r => r.Rating!.Value) 
+                    : (double?)null))
+            .ForMember(dest => dest.ReviewCount, opt => opt.MapFrom(src => src.Reviews.Count));
 
         CreateMap<CreateTourRequestDto, Tour>()
             .ForMember(dest => dest.Difficulty, opt => opt.MapFrom(src => (TourDifficulty)src.Difficulty))

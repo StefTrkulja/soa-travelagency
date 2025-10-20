@@ -71,6 +71,8 @@ public class Tour
     
     public ICollection<TourTransportTime> TransportTimes { get; set; } = new List<TourTransportTime>();
     
+    public ICollection<TourReview> Reviews { get; set; } = new List<TourReview>();
+    
     public List<string> GetTags()
     {
         return TourTags.Select(tt => tt.Tag.Name).ToList();

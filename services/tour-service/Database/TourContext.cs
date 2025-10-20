@@ -10,6 +10,7 @@ public class TourContext : DbContext
     public DbSet<TourTag> TourTags { get; set; }
     public DbSet<TourKeyPoint> TourKeyPoints { get; set; }
     public DbSet<TourTransportTime> TourTransportTimes { get; set; }
+    public DbSet<TourReview> TourReviews { get; set; }
 
     public TourContext(DbContextOptions<TourContext> options) : base(options) { }
 
@@ -76,6 +77,22 @@ public class TourContext : DbContext
         modelBuilder.Entity<TourTransportTime>()
             .Property(ttt => ttt.TransportType)
             .HasConversion<string>();
+
+        // TourReview configuration
+        modelBuilder.Entity<TourReview>()
+            .HasOne(tr => tr.Tour)
+            .WithMany(t => t.Reviews)
+            .HasForeignKey(tr => tr.TourId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<TourReview>()
+            .HasIndex(tr => tr.TourId);
+
+        modelBuilder.Entity<TourReview>()
+            .HasIndex(tr => tr.UserId);
+
+        modelBuilder.Entity<TourReview>()
+            .HasIndex(tr => new { tr.TourId, tr.UserId });
 
         modelBuilder.HasAnnotation("Relational:Collation", null);
     }
