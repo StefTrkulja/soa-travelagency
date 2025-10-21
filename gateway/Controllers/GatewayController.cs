@@ -300,6 +300,77 @@ public class GatewayController : ControllerBase
         return await ForwardRequest("tours", $"api/tours/{tourId}/transport-times", HttpMethod.Post, includeAuth: true);
     }
 
+    // Tour Reviews endpoints
+    [HttpPost("tours/reviews")]
+    [Authorize(Policy = "touristPolicy")]
+    public async Task<IActionResult> CreateTourReview()
+    {
+        return await ForwardRequest("tours", "api/TourReviews", HttpMethod.Post, includeAuth: true);
+    }
+
+    [HttpGet("tours/reviews")]
+    public async Task<IActionResult> GetTourReviews([FromQuery] long? tourId, [FromQuery] long? userId)
+    {
+        var queryString = "";
+        if (tourId.HasValue || userId.HasValue)
+        {
+            var queryParams = new List<string>();
+            if (tourId.HasValue) queryParams.Add($"tourId={tourId.Value}");
+            if (userId.HasValue) queryParams.Add($"userId={userId.Value}");
+            queryString = "?" + string.Join("&", queryParams);
+        }
+        
+        return await ForwardRequest("tours", $"api/TourReviews{queryString}", HttpMethod.Get);
+    }
+
+    [HttpGet("tours/reviews/{id}")]
+    public async Task<IActionResult> GetTourReview(long id)
+    {
+        return await ForwardRequest("tours", $"api/TourReviews/{id}", HttpMethod.Get);
+    }
+
+    [HttpPut("tours/reviews/{id}")]
+    [Authorize(Policy = "touristPolicy")]
+    public async Task<IActionResult> UpdateTourReview(long id)
+    {
+        return await ForwardRequest("tours", $"api/TourReviews/{id}", HttpMethod.Put, includeAuth: true);
+    }
+
+    [HttpDelete("tours/reviews/{id}")]
+    [Authorize(Policy = "touristPolicy")]
+    public async Task<IActionResult> DeleteTourReview(long id)
+    {
+        return await ForwardRequest("tours", $"api/TourReviews/{id}", HttpMethod.Delete, includeAuth: true);
+    }
+
+    [HttpGet("tours/{tourId}/rating")]
+    public async Task<IActionResult> GetTourRating(long tourId)
+    {
+        return await ForwardRequest("tours", $"api/TourReviews/tour/{tourId}/rating", HttpMethod.Get);
+    }
+
+    [HttpGet("tours/reviews/my")]
+    [Authorize(Policy = "touristPolicy")]
+    public async Task<IActionResult> GetMyTourReviews()
+    {
+        try
+        {
+            var token = ExtractTokenFromHeader();
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized(new { message = "No authentication token provided" });
+            }
+            
+            var userId = ExtractUserIdFromJwt(token);
+            return await ForwardRequest("tours", $"api/TourReviews?userId={userId}", HttpMethod.Get, includeAuth: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user reviews");
+            return StatusCode(500, new { message = "Error retrieving reviews" });
+        }
+    }
+
     private async Task<IActionResult> ForwardRequest(string serviceName, string path, HttpMethod method, bool includeAuth = false)
     {
         try
@@ -501,5 +572,42 @@ public class GatewayController : ControllerBase
             _logger.LogError(ex, "Error processing follow request for {ServiceName}/{Path}", serviceName, path);
             return StatusCode(500, new { message = "Gateway error occurred" });
         }
+    }
+
+    // User Location Endpoints
+    [HttpPost("profile/location")]
+    [Authorize]
+    public async Task<IActionResult> UpdateUserLocation()
+    {
+        return await ForwardRequest("stakeholders", "api/Profile/location", HttpMethod.Post, includeAuth: true);
+    }
+
+    [HttpGet("profile/location")]
+    [Authorize]
+    public async Task<IActionResult> GetMyLocation()
+    {
+        return await ForwardRequest("stakeholders", "api/Profile/location", HttpMethod.Get, includeAuth: true);
+    }
+
+    [HttpGet("profile/location/{userId}")]
+    [Authorize]
+    public async Task<IActionResult> GetUserLocation(long userId)
+    {
+        return await ForwardRequest("stakeholders", $"api/Profile/location/{userId}", HttpMethod.Get, includeAuth: true);
+    }
+
+    [HttpDelete("profile/location")]
+    [Authorize]
+    public async Task<IActionResult> ClearUserLocation()
+    {
+        return await ForwardRequest("stakeholders", "api/Profile/location", HttpMethod.Delete, includeAuth: true);
+    }
+
+    [HttpGet("profile/nearby")]
+    [Authorize]
+    public async Task<IActionResult> GetUsersNearby([FromQuery] decimal latitude, [FromQuery] decimal longitude, [FromQuery] double radiusKm = 10.0)
+    {
+        var queryString = $"?latitude={latitude}&longitude={longitude}&radiusKm={radiusKm}";
+        return await ForwardRequest("stakeholders", $"api/Profile/nearby{queryString}", HttpMethod.Get, includeAuth: true);
     }
 }

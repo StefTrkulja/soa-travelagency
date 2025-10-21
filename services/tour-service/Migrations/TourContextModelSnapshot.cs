@@ -136,6 +136,52 @@ namespace TourService.Migrations
                     b.ToTable("tour_key_points", "tours");
                 });
 
+            modelBuilder.Entity("TourService.Domain.TourReview", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("TourId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("VisitationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TourId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("TourId", "UserId");
+
+                    b.ToTable("tour_reviews", "tours");
+                });
+
             modelBuilder.Entity("TourService.Domain.TourTag", b =>
                 {
                     b.Property<long>("Id")
@@ -197,6 +243,17 @@ namespace TourService.Migrations
                     b.Navigation("Tour");
                 });
 
+            modelBuilder.Entity("TourService.Domain.TourReview", b =>
+                {
+                    b.HasOne("TourService.Domain.Tour", "Tour")
+                        .WithMany("Reviews")
+                        .HasForeignKey("TourId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tour");
+                });
+
             modelBuilder.Entity("TourService.Domain.TourTag", b =>
                 {
                     b.HasOne("TourService.Domain.Tag", "Tag")
@@ -235,6 +292,8 @@ namespace TourService.Migrations
             modelBuilder.Entity("TourService.Domain.Tour", b =>
                 {
                     b.Navigation("KeyPoints");
+
+                    b.Navigation("Reviews");
 
                     b.Navigation("TourTags");
 

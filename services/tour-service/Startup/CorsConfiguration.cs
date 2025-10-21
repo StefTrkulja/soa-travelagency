@@ -8,9 +8,10 @@ public static class CorsConfiguration
         {
             options.AddPolicy(policyName, builder =>
             {
-                builder.AllowAnyOrigin()
+                builder.WithOrigins("http://localhost:4200", "http://localhost:8080", "http://localhost:8081", "http://localhost:5000")
                        .AllowAnyMethod()
-                       .AllowAnyHeader();
+                       .AllowAnyHeader()
+                       .AllowCredentials();
             });
         });
 

@@ -56,6 +56,48 @@ namespace StakeholdersService.Controllers
             return CreateResponse(result);
         }
 
+        // Location endpoints
+        [HttpPost("location")]
+        public ActionResult<UserLocationResponseDto> UpdateMyLocation([FromBody] UserLocationDto locationDto)
+        {
+            var userId = GetCurrentUserId();
+            var result = _profileService.UpdateUserLocation(userId, locationDto);
+            return CreateResponse(result);
+        }
+
+        [HttpGet("location")]
+        public ActionResult<UserLocationResponseDto> GetMyLocation()
+        {
+            var userId = GetCurrentUserId();
+            var result = _profileService.GetUserLocation(userId);
+            return CreateResponse(result);
+        }
+
+        [HttpGet("location/{userId}")]
+        public ActionResult<UserLocationResponseDto> GetUserLocation(long userId)
+        {
+            var result = _profileService.GetUserLocation(userId);
+            return CreateResponse(result);
+        }
+
+        [HttpDelete("location")]
+        public ActionResult<UserLocationResponseDto> ClearMyLocation()
+        {
+            var userId = GetCurrentUserId();
+            var result = _profileService.ClearUserLocation(userId);
+            return CreateResponse(result);
+        }
+
+        [HttpGet("nearby")]
+        public ActionResult<List<UserLocationResponseDto>> GetUsersNearby(
+            [FromQuery] decimal latitude, 
+            [FromQuery] decimal longitude, 
+            [FromQuery] double radiusKm = 10.0)
+        {
+            var result = _profileService.GetUsersNearLocation(latitude, longitude, radiusKm);
+            return CreateResponse(result);
+        }
+
         private long GetCurrentUserId()
         {
             var userIdClaim = User.FindFirst("id");

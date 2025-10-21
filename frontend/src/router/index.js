@@ -5,10 +5,12 @@ import SignUpView from '../views/SignUpView.vue';
 import CreateTourView from '../views/CreateTourView.vue';
 import ToursView from '../views/ToursView.vue';
 import TouristToursView from '../views/TouristToursView.vue';
+import MyReviewsView from '../views/MyReviewsView.vue';
 import ProfileView from '../views/ProfileView.vue';
 import BlogView from '../views/BlogView.vue';
 import CreateBlogView from '../views/CreateBlogView.vue';
 import UsersView from '../views/UsersView.vue';
+import MyLocationView from '../views/MyLocationView.vue';
 import { store } from '@/utils/store';
 
 const routes = [
@@ -34,6 +36,18 @@ const routes = [
     meta: { requiresAuth: true, role: ['Tourist'] }
   },
   { 
+    path: '/my-reviews', 
+    name: 'MyReviews', 
+    component: MyReviewsView,
+    meta: { requiresAuth: true, role: ['Tourist'] }
+  },
+  { 
+    path: '/my-location', 
+    name: 'MyLocation', 
+    component: MyLocationView,
+    meta: { requiresAuth: true, role: ['Tourist'] }
+  },
+  { 
     path: '/profile/:username', 
     name: 'Profile', 
     component: ProfileView,
@@ -56,6 +70,12 @@ const routes = [
     name: 'Users', 
     component: UsersView,
     meta: { requiresAuth: true }
+  },
+  { 
+    path: '/admin/users', 
+    name: 'AdminUsers', 
+    component: () => import('../views/AdminUsersView.vue'),
+    meta: { requiresAuth: true, role: ['Administrator'] }
   },
 ];
 

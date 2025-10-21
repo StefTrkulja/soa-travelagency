@@ -1,0 +1,38 @@
+# Profile Management Test Endpoints
+# First login to get a JWT token
+
+### Login as testuser
+POST http://localhost:5000/api/Gateway/stakeholders/users/login
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "password123"
+}
+
+### Get current user profile 
+GET http://localhost:5000/api/Gateway/stakeholders/profile
+Authorization: Bearer {{token}}
+
+### Update user profile with new fields
+PUT http://localhost:5000/api/Gateway/stakeholders/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "John",
+  "surname": "Doe", 
+  "email": "testuser@example.com",
+  "biography": "I'm a passionate traveler who loves exploring new cultures and destinations. I've been to over 20 countries and always looking for the next adventure!",
+  "motto": "Travel far, travel wide, live life to the fullest"
+}
+
+### Update password
+PUT http://localhost:5000/api/Gateway/stakeholders/profile/password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "currentPassword": "password123",
+  "newPassword": "newPassword456"
+}

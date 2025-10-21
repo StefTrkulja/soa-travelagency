@@ -75,6 +75,13 @@
                     Change Photo
                   </v-btn>
                 </div>
+                
+                <!-- Profile Summary (when not editing) -->
+                <div v-if="!isEditing" class="mt-4">
+                  <h2 class="text-h5 mb-2">{{ profile.name }} {{ profile.surname }}</h2>
+                  <p v-if="profile.motto" class="text-subtitle-1 font-italic mb-2">"{{ profile.motto }}"</p>
+                  <p v-if="profile.biography" class="text-body-1">{{ profile.biography }}</p>
+                </div>
               </div>
 
               <!-- Username (Read-only) -->
@@ -87,6 +94,28 @@
                 class="mb-4"
               ></v-text-field>
 
+              <!-- Name -->
+              <v-text-field
+                v-model="editForm.Name"
+                label="First Name"
+                prepend-icon="mdi-account"
+                :readonly="!isEditing"
+                variant="outlined"
+                :rules="nameRules"
+                class="mb-4"
+              ></v-text-field>
+
+              <!-- Surname -->
+              <v-text-field
+                v-model="editForm.Surname"
+                label="Last Name"
+                prepend-icon="mdi-account"
+                :readonly="!isEditing"
+                variant="outlined"
+                :rules="surnameRules"
+                class="mb-4"
+              ></v-text-field>
+
               <!-- Email -->
               <v-text-field
                 v-model="editForm.Email"
@@ -96,6 +125,33 @@
                 variant="outlined"
                 :rules="emailRules"
                 class="mb-4"
+              ></v-text-field>
+
+              <!-- Biography -->
+              <v-textarea
+                v-model="editForm.Biography"
+                label="Biography"
+                prepend-icon="mdi-text"
+                :readonly="!isEditing"
+                variant="outlined"
+                rows="3"
+                class="mb-4"
+                hint="Tell us about yourself (max 500 characters)"
+                :rules="biographyRules"
+                counter="500"
+              ></v-textarea>
+
+              <!-- Motto -->
+              <v-text-field
+                v-model="editForm.Motto"
+                label="Personal Motto"
+                prepend-icon="mdi-format-quote-close"
+                :readonly="!isEditing"
+                variant="outlined"
+                class="mb-4"
+                hint="Your personal motto or favorite quote (max 150 characters)"
+                :rules="mottoRules"
+                counter="150"
               ></v-text-field>
 
               <!-- Role (Read-only) -->
@@ -197,16 +253,34 @@ export default {
       successSnackbar: false,
       successMessage: '',
       editForm: {
-        Email: ''
+        Name: '',
+        Surname: '',
+        Email: '',
+        Biography: '',
+        Motto: ''
       },
       passwordForm: {
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
       },
+      nameRules: [
+        v => !!v || 'First name is required',
+        v => (v && v.length >= 2) || 'First name must be at least 2 characters'
+      ],
+      surnameRules: [
+        v => !!v || 'Last name is required',
+        v => (v && v.length >= 2) || 'Last name must be at least 2 characters'
+      ],
       emailRules: [
         v => !!v || 'Email is required',
         v => /.+@.+\..+/.test(v) || 'Email must be valid'
+      ],
+      biographyRules: [
+        v => !v || v.length <= 500 || 'Biography must be 500 characters or less'
+      ],
+      mottoRules: [
+        v => !v || v.length <= 150 || 'Motto must be 150 characters or less'
       ],
       passwordRules: [
         v => !!v || 'Current password is required'
@@ -261,7 +335,11 @@ export default {
     },
     populateEditForm() {
       this.editForm = {
-        Email: this.profile.email || ''
+        Name: this.profile.name || '',
+        Surname: this.profile.surname || '',
+        Email: this.profile.email || '',
+        Biography: this.profile.biography || '',
+        Motto: this.profile.motto || ''
       };
       this.passwordForm = {
         currentPassword: '',
@@ -293,13 +371,25 @@ export default {
       this.errorMessage = '';
 
       try {
-        // Update email
+        // Update profile data
         const profileData = {
-          Email: this.editForm.Email
+          Name: this.editForm.Name,
+          Surname: this.editForm.Surname,
+          Email: this.editForm.Email,
+          Biography: this.editForm.Biography,
+          Motto: this.editForm.Motto
         };
         
         const response = await axios.put('/stakeholders/profile', profileData);
-        this.profile = response.data;
+        // Update local profile data with the response
+        this.profile = {
+          ...this.profile,
+          name: response.data.name,
+          surname: response.data.surname,
+          email: response.data.email,
+          biography: response.data.biography,
+          motto: response.data.motto
+        };
         
         // Update password if provided
         if (this.passwordForm.newPassword) {
@@ -343,6 +433,7 @@ export default {
 .profile-card {
   border-radius: 16px;
   transition: all 0.3s ease;
+  overflow: hidden;
 }
 
 .profile-card:hover {
@@ -357,6 +448,11 @@ export default {
 .profile-avatar {
   border: 4px solid #E3F2FD;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.profile-avatar:hover {
+  transform: scale(1.02);
 }
 
 .info-item {
@@ -365,13 +461,75 @@ export default {
   gap: 4px;
 }
 
+/* Profile summary styling */
+.profile-container h2 {
+  color: #1976D2;
+  font-weight: 500;
+}
+
+.profile-container .font-italic {
+  color: #546E7A;
+  font-style: italic;
+  font-size: 1.1rem;
+}
+
+.profile-container .text-body-1 {
+  color: #424242;
+  line-height: 1.6;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* Form field styling improvements */
+.v-text-field, .v-textarea {
+  margin-bottom: 8px;
+}
+
+.v-expansion-panels {
+  background-color: #F5F5F5;
+  border-radius: 12px;
+}
+
+/* Action buttons styling */
+.v-card-actions {
+  background-color: #FAFAFA;
+  border-top: 1px solid #E0E0E0;
+}
+
+/* Responsive improvements */
 @media (max-width: 960px) {
   .profile-container {
     padding-top: 20px;
+    padding-left: 16px;
+    padding-right: 16px;
   }
   
   .text-h3 {
     font-size: 2rem !important;
+  }
+  
+  .profile-avatar {
+    width: 100px !important;
+    height: 100px !important;
+  }
+  
+  .profile-container .text-body-1 {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .profile-container {
+    padding-top: 16px;
+  }
+  
+  .text-h3 {
+    font-size: 1.75rem !important;
+  }
+  
+  .profile-avatar {
+    width: 80px !important;
+    height: 80px !important;
   }
 }
 </style>

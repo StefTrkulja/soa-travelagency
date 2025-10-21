@@ -5,19 +5,45 @@
 			Travel Agency
 		</v-btn>
 		<v-spacer></v-spacer>
+		<v-btn 
+			size="large" 
+			prepend-icon="mdi-logout" 
+			variant="outlined" 
+			color="white"
+			class="mr-3 logout-btn"
+			v-if="store.role !== 'guest'" 
+			@click="logout"
+		>
+			Logout
+		</v-btn>
 		<v-btn icon="mdi-menu" @click="drawer = !drawer" v-if="store.role !== 'guest'">
 		</v-btn>
 		<v-btn size="large" prepend-icon="mdi-login" v-if="store.role === 'guest'" to="/login">Login</v-btn>
 	</v-app-bar>
 
-	<v-navigation-drawer v-model="drawer" temporary location="right" v-if="store.role !== 'guest'">
+	<v-navigation-drawer v-model="drawer" temporary location="right" v-if="store.role === 'Tourist'">
 		<v-list>
+		
+		<v-list-item 
+			size="large" 
+			prepend-icon="mdi-map-marker" 
+			to="/my-location" 
+			v-if="store.role === 'Tourist'"
+			class="golden-menu-item"
+		>
+			My Location
+		</v-list-item>
+
 		<v-list-item size="large" prepend-icon="mdi-map" to="/tours" v-if="store.role === 'Author'">
 			My Tours
 		</v-list-item>
 
 		<v-list-item size="large" prepend-icon="mdi-map-marker-multiple" to="/tours/public" v-if="store.role === 'Tourist'">
 			Available Tours
+		</v-list-item>
+
+		<v-list-item size="large" prepend-icon="mdi-star-box" to="/my-reviews" v-if="store.role === 'Tourist'">
+			My Reviews
 		</v-list-item>
 
 		<v-list-item size="large" prepend-icon="mdi-plus" to="/create-tour" v-if="store.role === 'Author'">
@@ -105,5 +131,36 @@ export default {
 	border-radius: 8px;
 	color: #BBDEFB;
 	cursor: pointer;
+}
+
+.v-btn.logout-btn {
+	border: 1px solid rgba(255, 255, 255, 0.7);
+	color: white;
+	transition: all 0.3s ease;
+}
+
+.v-btn.logout-btn:hover {
+	background-color: rgba(255, 255, 255, 0.1);
+	border-color: white;
+}
+
+.golden-menu-item {
+	background: linear-gradient(135deg, #FFD700, #FFA500) !important;
+	color: #1A1A1A !important;
+	font-weight: bold !important;
+	margin: 8px 12px !important;
+	border-radius: 8px !important;
+	box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3) !important;
+}
+
+.golden-menu-item:hover {
+	background: linear-gradient(135deg, #FFED4E, #FFB84D) !important;
+	transform: translateY(-1px) !important;
+	box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4) !important;
+	transition: all 0.3s ease !important;
+}
+
+.golden-menu-item .v-list-item__prepend .v-icon {
+	color: #1A1A1A !important;
 }
 </style>

@@ -46,7 +46,7 @@ services:
     image: grafana/grafana:latest
     container_name: grafana
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
@@ -167,6 +167,23 @@ services:
       timeout: 5s
       retries: 5
 
+  purchase-db:
+    image: mongo:7
+    container_name: purchase-db
+    environment:
+      MONGO_INITDB_DATABASE: purchasedb
+    ports:
+      - "27017:27017"
+    volumes:
+      - purchase_data:/data/db
+    networks:
+      - travel-agency-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   stakeholders-service:
     build:
       context: ./services/stakeholders-service
@@ -278,6 +295,37 @@ services:
       timeout: 5s
       retries: 10
 
+  purchase-service:
+    build:
+      context: ./services/purchase-service
+      dockerfile: Dockerfile
+    container_name: purchase-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ASPNETCORE_URLS=http://+:80
+      - MongoDB__ConnectionString=mongodb://purchase-db:27017
+      - MongoDB__DatabaseName=purchasedb
+      - MongoDB__PurchasesCollectionName=Purchases
+      - JWT_KEY=explorer_secret_key_very_long_and_secure_key_for_production
+      - JWT_ISSUER=travel-agency
+      - JWT_AUDIENCE=travel-agency-users
+    ports:
+      - "5005:80"
+    depends_on:
+      purchase-db:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_started
+    networks:
+      - travel-agency-network
+    volumes:
+      - ./logs:/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   gateway:
     build:
       context: ./gateway
@@ -294,6 +342,7 @@ services:
       - BLOG_SERVICE_URL=http://blog-service:8080
       - FOLLOWER_SERVICE_URL=http://follower-microservice:8081
       - FOLLOWER_GRPC_URL=http://follower-microservice:9091
+      - PURCHASE_SERVICE_URL=http://purchase-service:80
     ports:
       - "5000:80"
     depends_on:
@@ -304,6 +353,8 @@ services:
       blog-service:
         condition: service_started
       follower-microservice:
+        condition: service_started
+      purchase-service:
         condition: service_started
       elasticsearch:
         condition: service_started
@@ -342,6 +393,7 @@ volumes:
   blog_data:
   blog_uploads:
   neo4j_data:
+  purchase_data:
   elasticsearch_data:
   prometheus_data:
   grafana_data:

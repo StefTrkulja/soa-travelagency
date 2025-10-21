@@ -17,5 +17,11 @@
         User UpdatePassword(long userId, string currentPassword, string newPassword);
         User UpdateEmail(long userId, string email);
         List<User> GetAllUsers();
+        
+        // Location methods
+        User UpdateUserLocation(long userId, decimal latitude, decimal longitude);
+        User? GetUserLocation(long userId);
+        User ClearUserLocation(long userId);
+        List<User> GetUsersWithLocationInRadius(decimal centerLat, decimal centerLng, double radiusKm);
     }
 }
