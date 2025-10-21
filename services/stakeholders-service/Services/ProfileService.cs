@@ -102,5 +102,107 @@ namespace StakeholdersService.Services
                 return Result.Fail(FailureCode.InvalidArgument).WithError(ex.Message);
             }
         }
+
+        public Result<UserLocationResponseDto> UpdateUserLocation(long userId, UserLocationDto locationDto)
+        {
+            try
+            {
+                var updatedUser = _userRepository.UpdateUserLocation(userId, locationDto.Latitude, locationDto.Longitude);
+                var locationResponse = new UserLocationResponseDto
+                {
+                    UserId = updatedUser.Id,
+                    Username = updatedUser.Username,
+                    Latitude = updatedUser.Latitude,
+                    Longitude = updatedUser.Longitude,
+                    LocationUpdatedAt = updatedUser.LocationUpdatedAt,
+                    HasLocation = updatedUser.HasLocation()
+                };
+                return Result.Ok(locationResponse);
+            }
+            catch (ArgumentException ex)
+            {
+                return Result.Fail(FailureCode.InvalidArgument).WithError(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return Result.Fail(FailureCode.InvalidArgument).WithError(ex.Message);
+            }
+        }
+
+        public Result<UserLocationResponseDto> GetUserLocation(long userId)
+        {
+            try
+            {
+                var user = _userRepository.GetUserLocation(userId);
+                if (user == null)
+                {
+                    return Result.Fail(FailureCode.NotFound).WithError($"User with ID {userId} not found");
+                }
+
+                var locationResponse = new UserLocationResponseDto
+                {
+                    UserId = user.Id,
+                    Username = user.Username,
+                    Latitude = user.Latitude,
+                    Longitude = user.Longitude,
+                    LocationUpdatedAt = user.LocationUpdatedAt,
+                    HasLocation = user.HasLocation()
+                };
+                return Result.Ok(locationResponse);
+            }
+            catch (Exception ex)
+            {
+                return Result.Fail(FailureCode.InvalidArgument).WithError(ex.Message);
+            }
+        }
+
+        public Result<UserLocationResponseDto> ClearUserLocation(long userId)
+        {
+            try
+            {
+                var updatedUser = _userRepository.ClearUserLocation(userId);
+                var locationResponse = new UserLocationResponseDto
+                {
+                    UserId = updatedUser.Id,
+                    Username = updatedUser.Username,
+                    Latitude = updatedUser.Latitude,
+                    Longitude = updatedUser.Longitude,
+                    LocationUpdatedAt = updatedUser.LocationUpdatedAt,
+                    HasLocation = updatedUser.HasLocation()
+                };
+                return Result.Ok(locationResponse);
+            }
+            catch (ArgumentException ex)
+            {
+                return Result.Fail(FailureCode.NotFound).WithError(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return Result.Fail(FailureCode.InvalidArgument).WithError(ex.Message);
+            }
+        }
+
+        public Result<List<UserLocationResponseDto>> GetUsersNearLocation(decimal latitude, decimal longitude, double radiusKm)
+        {
+            try
+            {
+                var users = _userRepository.GetUsersWithLocationInRadius(latitude, longitude, radiusKm);
+                var locationResponses = users.Select(user => new UserLocationResponseDto
+                {
+                    UserId = user.Id,
+                    Username = user.Username,
+                    Latitude = user.Latitude,
+                    Longitude = user.Longitude,
+                    LocationUpdatedAt = user.LocationUpdatedAt,
+                    HasLocation = user.HasLocation()
+                }).ToList();
+
+                return Result.Ok(locationResponses);
+            }
+            catch (Exception ex)
+            {
+                return Result.Fail(FailureCode.InvalidArgument).WithError(ex.Message);
+            }
+        }
     }
 }

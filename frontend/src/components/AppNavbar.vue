@@ -21,8 +21,19 @@
 		<v-btn size="large" prepend-icon="mdi-login" v-if="store.role === 'guest'" to="/login">Login</v-btn>
 	</v-app-bar>
 
-	<v-navigation-drawer v-model="drawer" temporary location="right" v-if="store.role !== 'guest'">
+	<v-navigation-drawer v-model="drawer" temporary location="right" v-if="store.role === 'Tourist'">
 		<v-list>
+		
+		<v-list-item 
+			size="large" 
+			prepend-icon="mdi-map-marker" 
+			to="/my-location" 
+			v-if="store.role === 'Tourist'"
+			class="golden-menu-item"
+		>
+			My Location
+		</v-list-item>
+
 		<v-list-item size="large" prepend-icon="mdi-map" to="/tours" v-if="store.role === 'Author'">
 			My Tours
 		</v-list-item>
@@ -131,5 +142,25 @@ export default {
 .v-btn.logout-btn:hover {
 	background-color: rgba(255, 255, 255, 0.1);
 	border-color: white;
+}
+
+.golden-menu-item {
+	background: linear-gradient(135deg, #FFD700, #FFA500) !important;
+	color: #1A1A1A !important;
+	font-weight: bold !important;
+	margin: 8px 12px !important;
+	border-radius: 8px !important;
+	box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3) !important;
+}
+
+.golden-menu-item:hover {
+	background: linear-gradient(135deg, #FFED4E, #FFB84D) !important;
+	transform: translateY(-1px) !important;
+	box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4) !important;
+	transition: all 0.3s ease !important;
+}
+
+.golden-menu-item .v-list-item__prepend .v-icon {
+	color: #1A1A1A !important;
 }
 </style>

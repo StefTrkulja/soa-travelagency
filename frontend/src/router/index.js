@@ -10,6 +10,7 @@ import ProfileView from '../views/ProfileView.vue';
 import BlogView from '../views/BlogView.vue';
 import CreateBlogView from '../views/CreateBlogView.vue';
 import UsersView from '../views/UsersView.vue';
+import MyLocationView from '../views/MyLocationView.vue';
 import { store } from '@/utils/store';
 
 const routes = [
@@ -38,6 +39,12 @@ const routes = [
     path: '/my-reviews', 
     name: 'MyReviews', 
     component: MyReviewsView,
+    meta: { requiresAuth: true, role: ['Tourist'] }
+  },
+  { 
+    path: '/my-location', 
+    name: 'MyLocation', 
+    component: MyLocationView,
     meta: { requiresAuth: true, role: ['Tourist'] }
   },
   { 

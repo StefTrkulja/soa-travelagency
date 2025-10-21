@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using StakeholdersService.Database;
@@ -11,9 +12,11 @@ using StakeholdersService.Database;
 namespace StakeholdersService.Migrations
 {
     [DbContext(typeof(StakeholdersContext))]
-    partial class StakeholdersContextModelSnapshot : ModelSnapshot
+    [Migration("20251021075818_AddUserLocation")]
+    partial class AddUserLocation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
