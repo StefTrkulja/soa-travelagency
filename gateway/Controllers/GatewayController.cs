@@ -641,6 +641,36 @@ public class GatewayController : ControllerBase
         }
     }
 
+    // Simplified cart endpoints (without purchase prefix) for easier frontend access
+    [HttpPost("cart/add-item")]
+    [Authorize]
+    public async Task<IActionResult> AddItemToCartSimple()
+    {
+        return await ForwardRequestWithUserId("purchase", "api/shoppingcart/add-item", HttpMethod.Post, includeAuth: true);
+    }
+
+    [HttpGet("cart")]
+    [Authorize]
+    public async Task<IActionResult> GetMyActiveCartSimple()
+    {
+        try
+        {
+            var token = ExtractTokenFromHeader();
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized(new { message = "No authentication token provided" });
+            }
+            
+            var userId = ExtractUserIdFromJwt(token);
+            return await ForwardRequest("purchase", $"api/shoppingcart/user/{userId}/active", HttpMethod.Get, includeAuth: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user's active cart");
+            return StatusCode(500, new { message = "Error retrieving cart" });
+        }
+    }
+
     [HttpGet("purchase/cart/all")]
     [Authorize]
     public async Task<IActionResult> GetMyAllCarts()
@@ -695,6 +725,50 @@ public class GatewayController : ControllerBase
     [HttpDelete("purchase/cart/clear")]
     [Authorize]
     public async Task<IActionResult> ClearMyCart()
+    {
+        try
+        {
+            var token = ExtractTokenFromHeader();
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized(new { message = "No authentication token provided" });
+            }
+            
+            var userId = ExtractUserIdFromJwt(token);
+            return await ForwardRequest("purchase", $"api/shoppingcart/user/{userId}/clear", HttpMethod.Delete, includeAuth: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error clearing cart");
+            return StatusCode(500, new { message = "Error clearing cart" });
+        }
+    }
+
+    [HttpDelete("cart/item/{orderItemId}")]
+    [Authorize]
+    public async Task<IActionResult> RemoveItemFromCartSimple(string orderItemId)
+    {
+        try
+        {
+            var token = ExtractTokenFromHeader();
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized(new { message = "No authentication token provided" });
+            }
+            
+            var userId = ExtractUserIdFromJwt(token);
+            return await ForwardRequest("purchase", $"api/shoppingcart/user/{userId}/item/{orderItemId}", HttpMethod.Delete, includeAuth: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing item from cart");
+            return StatusCode(500, new { message = "Error removing item" });
+        }
+    }
+
+    [HttpDelete("cart/clear")]
+    [Authorize]
+    public async Task<IActionResult> ClearMyCartSimple()
     {
         try
         {

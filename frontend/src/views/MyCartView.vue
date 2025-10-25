@@ -174,7 +174,7 @@ export default {
       this.error = null;
       
       try {
-        const response = await axiosInstance.get('/purchase/cart');
+        const response = await axiosInstance.get('/cart');
         this.cart = response.data;
       } catch (error) {
         console.error('Error loading cart:', error);
@@ -199,7 +199,7 @@ export default {
       this.removingItems.push(itemId);
       
       try {
-        await axiosInstance.delete(`/purchase/cart/item/${itemId}`);
+        await axiosInstance.delete(`/cart/item/${itemId}`);
         
         // Remove item from local cart data
         if (this.cart && this.cart.orderItems) {
@@ -227,7 +227,7 @@ export default {
       this.clearingCart = true;
       
       try {
-        await axiosInstance.delete('/purchase/cart/clear');
+        await axiosInstance.delete('/cart/clear');
         
         // Clear local cart data
         this.cart = {
