@@ -610,4 +610,143 @@ public class GatewayController : ControllerBase
         var queryString = $"?latitude={latitude}&longitude={longitude}&radiusKm={radiusKm}";
         return await ForwardRequest("stakeholders", $"api/Profile/nearby{queryString}", HttpMethod.Get, includeAuth: true);
     }
+
+    // Purchase Service - Shopping Cart Endpoints
+    [HttpPost("purchase/cart/add-item")]
+    [Authorize]
+    public async Task<IActionResult> AddItemToCart()
+    {
+        return await ForwardRequestWithUserId("purchase", "api/shoppingcart/add-item", HttpMethod.Post, includeAuth: true);
+    }
+
+    [HttpGet("purchase/cart")]
+    [Authorize]
+    public async Task<IActionResult> GetMyActiveCart()
+    {
+        try
+        {
+            var token = ExtractTokenFromHeader();
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized(new { message = "No authentication token provided" });
+            }
+            
+            var userId = ExtractUserIdFromJwt(token);
+            return await ForwardRequest("purchase", $"api/shoppingcart/user/{userId}/active", HttpMethod.Get, includeAuth: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user's active cart");
+            return StatusCode(500, new { message = "Error retrieving cart" });
+        }
+    }
+
+    [HttpGet("purchase/cart/all")]
+    [Authorize]
+    public async Task<IActionResult> GetMyAllCarts()
+    {
+        try
+        {
+            var token = ExtractTokenFromHeader();
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized(new { message = "No authentication token provided" });
+            }
+            
+            var userId = ExtractUserIdFromJwt(token);
+            return await ForwardRequest("purchase", $"api/shoppingcart/user/{userId}", HttpMethod.Get, includeAuth: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user's carts");
+            return StatusCode(500, new { message = "Error retrieving carts" });
+        }
+    }
+
+    [HttpGet("purchase/cart/{cartId}")]
+    [Authorize]
+    public async Task<IActionResult> GetCartById(string cartId)
+    {
+        return await ForwardRequest("purchase", $"api/shoppingcart/{cartId}", HttpMethod.Get, includeAuth: true);
+    }
+
+    [HttpDelete("purchase/cart/item/{orderItemId}")]
+    [Authorize]
+    public async Task<IActionResult> RemoveItemFromCart(string orderItemId)
+    {
+        try
+        {
+            var token = ExtractTokenFromHeader();
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized(new { message = "No authentication token provided" });
+            }
+            
+            var userId = ExtractUserIdFromJwt(token);
+            return await ForwardRequest("purchase", $"api/shoppingcart/user/{userId}/item/{orderItemId}", HttpMethod.Delete, includeAuth: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing item from cart");
+            return StatusCode(500, new { message = "Error removing item" });
+        }
+    }
+
+    [HttpDelete("purchase/cart/clear")]
+    [Authorize]
+    public async Task<IActionResult> ClearMyCart()
+    {
+        try
+        {
+            var token = ExtractTokenFromHeader();
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized(new { message = "No authentication token provided" });
+            }
+            
+            var userId = ExtractUserIdFromJwt(token);
+            return await ForwardRequest("purchase", $"api/shoppingcart/user/{userId}/clear", HttpMethod.Delete, includeAuth: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error clearing cart");
+            return StatusCode(500, new { message = "Error clearing cart" });
+        }
+    }
+
+    [HttpPut("purchase/cart/{cartId}")]
+    [Authorize]
+    public async Task<IActionResult> UpdateCart(string cartId)
+    {
+        return await ForwardRequest("purchase", $"api/shoppingcart/{cartId}", HttpMethod.Put, includeAuth: true);
+    }
+
+    // Purchase Service - Order Item Endpoints
+    [HttpGet("purchase/orderitems")]
+    [Authorize(Policy = "administratorPolicy")]
+    public async Task<IActionResult> GetAllOrderItems()
+    {
+        return await ForwardRequest("purchase", "api/orderitems", HttpMethod.Get, includeAuth: true);
+    }
+
+    [HttpGet("purchase/orderitems/{id}")]
+    [Authorize]
+    public async Task<IActionResult> GetOrderItem(string id)
+    {
+        return await ForwardRequest("purchase", $"api/orderitems/{id}", HttpMethod.Get, includeAuth: true);
+    }
+
+    [HttpPut("purchase/orderitems/{id}")]
+    [Authorize]
+    public async Task<IActionResult> UpdateOrderItem(string id)
+    {
+        return await ForwardRequest("purchase", $"api/orderitems/{id}", HttpMethod.Put, includeAuth: true);
+    }
+
+    [HttpDelete("purchase/orderitems/{id}")]
+    [Authorize]
+    public async Task<IActionResult> DeleteOrderItem(string id)
+    {
+        return await ForwardRequest("purchase", $"api/orderitems/{id}", HttpMethod.Delete, includeAuth: true);
+    }
 }

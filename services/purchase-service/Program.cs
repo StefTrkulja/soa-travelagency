@@ -22,6 +22,7 @@ builder.Services.AddScoped<IShoppingCartRepository, ShoppingCartRepository>();
 
 // Register services
 builder.Services.AddScoped<IOrderItemService, OrderItemService>();
+builder.Services.AddScoped<IShoppingCartService, ShoppingCartService>();
 
 var app = builder.Build();
 

@@ -21,7 +21,7 @@
 		<v-btn size="large" prepend-icon="mdi-login" v-if="store.role === 'guest'" to="/login">Login</v-btn>
 	</v-app-bar>
 
-	<v-navigation-drawer v-model="drawer" temporary location="right" v-if="store.role === 'Tourist'">
+	<v-navigation-drawer v-model="drawer" temporary location="right" v-if="store.role !== 'guest'">
 		<v-list>
 		
 		<v-list-item 
@@ -32,6 +32,15 @@
 			class="golden-menu-item"
 		>
 			My Location
+		</v-list-item>
+
+		<v-list-item 
+			size="large" 
+			prepend-icon="mdi-cart" 
+			to="/my-cart" 
+			v-if="store.role === 'Tourist'"
+		>
+			My Cart
 		</v-list-item>
 
 		<v-list-item size="large" prepend-icon="mdi-map" to="/tours" v-if="store.role === 'Author'">
