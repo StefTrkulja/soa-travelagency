@@ -43,6 +43,15 @@
 			My Cart
 		</v-list-item>
 
+		<v-list-item 
+			size="large" 
+			prepend-icon="mdi-receipt" 
+			to="/purchases" 
+			v-if="store.role === 'Tourist'"
+		>
+			My Purchases
+		</v-list-item>
+
 		<v-list-item size="large" prepend-icon="mdi-map" to="/tours" v-if="store.role === 'Author'">
 			My Tours
 		</v-list-item>

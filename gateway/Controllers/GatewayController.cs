@@ -823,4 +823,124 @@ public class GatewayController : ControllerBase
     {
         return await ForwardRequest("purchase", $"api/orderitems/{id}", HttpMethod.Delete, includeAuth: true);
     }
+
+    // Purchase Service - Purchase/Checkout Endpoints
+    [HttpPost("purchase/cart/checkout")]
+    [Authorize]
+    public async Task<IActionResult> PurchaseCart()
+    {
+        try
+        {
+            var token = ExtractTokenFromHeader();
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized(new { message = "No authentication token provided" });
+            }
+            
+            var userId = ExtractUserIdFromJwt(token);
+            var requestData = new { UserId = userId.ToString() };
+            var json = System.Text.Json.JsonSerializer.Serialize(requestData);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            
+            return await ForwardRequestWithContent("purchase", "api/purchase/cart", HttpMethod.Post, content, includeAuth: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error purchasing cart");
+            return StatusCode(500, new { message = "Error processing purchase" });
+        }
+    }
+
+    [HttpPost("cart/checkout")]
+    [Authorize]
+    public async Task<IActionResult> PurchaseCartSimple()
+    {
+        try
+        {
+            var token = ExtractTokenFromHeader();
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized(new { message = "No authentication token provided" });
+            }
+            
+            var userId = ExtractUserIdFromJwt(token);
+            var requestData = new { UserId = userId.ToString() };
+            var json = System.Text.Json.JsonSerializer.Serialize(requestData);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            
+            return await ForwardRequestWithContent("purchase", "api/purchase/cart", HttpMethod.Post, content, includeAuth: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error purchasing cart");
+            return StatusCode(500, new { message = "Error processing purchase" });
+        }
+    }
+
+    [HttpGet("purchase/user/{userId}")]
+    [Authorize]
+    public async Task<IActionResult> GetUserPurchases(string userId)
+    {
+        return await ForwardRequest("purchase", $"api/purchase/user/{userId}", HttpMethod.Get, includeAuth: true);
+    }
+
+    [HttpGet("purchases/my")]
+    [Authorize]
+    public async Task<IActionResult> GetMyPurchases()
+    {
+        try
+        {
+            var token = ExtractTokenFromHeader();
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized(new { message = "No authentication token provided" });
+            }
+            
+            var userId = ExtractUserIdFromJwt(token);
+            return await ForwardRequest("purchase", $"api/purchase/user/{userId}", HttpMethod.Get, includeAuth: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user purchases");
+            return StatusCode(500, new { message = "Error retrieving purchases" });
+        }
+    }
+
+    [HttpGet("purchase/tour/{tourId}")]
+    [Authorize]
+    public async Task<IActionResult> GetTourPurchases(string tourId)
+    {
+        return await ForwardRequest("purchase", $"api/purchase/tour/{tourId}", HttpMethod.Get, includeAuth: true);
+    }
+
+    [HttpGet("purchase/check/{userId}/{tourId}")]
+    [Authorize]
+    public async Task<IActionResult> HasUserPurchasedTour(string userId, string tourId)
+    {
+        return await ForwardRequest("purchase", $"api/purchase/check/{userId}/{tourId}", HttpMethod.Get, includeAuth: true);
+    }
+
+    private async Task<IActionResult> ForwardRequestWithContent(string serviceName, string path, HttpMethod method, HttpContent content, bool includeAuth = false)
+    {
+        try
+        {
+            string? authToken = null;
+            if (includeAuth)
+            {
+                authToken = ExtractTokenFromHeader();
+            }
+
+            var response = await _serviceProxy.ForwardRequestAsync(serviceName, path, method, content, authToken);
+            
+            var responseContent = await response.Content.ReadAsStringAsync();
+            
+            return StatusCode((int)response.StatusCode, 
+                string.IsNullOrEmpty(responseContent) ? null : responseContent);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing request for {ServiceName}/{Path}", serviceName, path);
+            return StatusCode(500, new { message = "Gateway error occurred" });
+        }
+    }
 }

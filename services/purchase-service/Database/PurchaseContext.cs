@@ -20,8 +20,6 @@ namespace PurchaseService.Database
         // Collections
         public IMongoCollection<OrderItem> OrderItems => _database.GetCollection<OrderItem>("OrderItems");
         public IMongoCollection<ShoppingCart> ShoppingCarts => _database.GetCollection<ShoppingCart>("ShoppingCarts");
-        
-        // TODO: Add more collections here when domain entities are created
-        // Example: public IMongoCollection<Purchase> Purchases => _database.GetCollection<Purchase>("Purchases");
+        public IMongoCollection<TourPurchaseToken> TourPurchaseTokens => _database.GetCollection<TourPurchaseToken>("TourPurchaseTokens");
     }
 }

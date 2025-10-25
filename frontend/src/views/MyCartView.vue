@@ -245,9 +245,41 @@ export default {
       }
     },
 
-    proceedToPurchase() {
-      // TODO: Implement purchase logic later
-      this.showSnackbar('Purchase functionality coming soon!', 'info');
+    async proceedToPurchase() {
+      if (!this.cart || !this.cart.orderItems || this.cart.orderItems.length === 0) {
+        this.showSnackbar('Cart is empty', 'error');
+        return;
+      }
+
+      this.loading = true;
+      
+      try {
+        const response = await axiosInstance.post('/cart/checkout');
+        
+        if (response.data && response.data.success) {
+          this.showSnackbar(`Purchase successful! ${response.data.purchaseTokens.length} tours purchased.`, 'success');
+          
+          // Clear the cart since purchase was successful
+          this.cart = {
+            orderItems: [],
+            itemCount: 0,
+            totalPrice: 0
+          };
+
+          // Optionally navigate to a purchases page or show purchase details
+          setTimeout(() => {
+            this.$router.push('/purchases');
+          }, 2000);
+        } else {
+          this.showSnackbar(response.data?.message || 'Purchase failed', 'error');
+        }
+      } catch (error) {
+        console.error('Error during purchase:', error);
+        const errorMessage = error.response?.data?.message || 'Failed to complete purchase';
+        this.showSnackbar(errorMessage, 'error');
+      } finally {
+        this.loading = false;
+      }
     },
 
     formatDate(dateString) {
