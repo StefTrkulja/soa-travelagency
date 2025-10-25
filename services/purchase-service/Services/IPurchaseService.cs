@@ -1,4 +1,12 @@
+using PurchaseService.DTO;
+
 namespace PurchaseService.Services
 {
-    // TODO: Add purchase service interfaces here
+    public interface IPurchaseService
+    {
+        Task<PurchaseResponseDto> PurchaseCartAsync(string userId);
+        Task<List<TourPurchaseTokenDto>> GetUserPurchasesAsync(string userId);
+        Task<List<TourPurchaseTokenDto>> GetTourPurchasesAsync(string tourId);
+        Task<bool> HasUserPurchasedTourAsync(string userId, string tourId);
+    }
 }

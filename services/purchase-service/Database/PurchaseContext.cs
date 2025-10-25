@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using PurchaseService.Domain;
 
 namespace PurchaseService.Database
 {
@@ -16,7 +17,9 @@ namespace PurchaseService.Database
         // Expose database for connection testing
         public IMongoDatabase GetDatabase() => _database;
 
-        // TODO: Add collections here when domain entities are created
-        // Example: public IMongoCollection<Purchase> Purchases => _database.GetCollection<Purchase>("Purchases");
+        // Collections
+        public IMongoCollection<OrderItem> OrderItems => _database.GetCollection<OrderItem>("OrderItems");
+        public IMongoCollection<ShoppingCart> ShoppingCarts => _database.GetCollection<ShoppingCart>("ShoppingCarts");
+        public IMongoCollection<TourPurchaseToken> TourPurchaseTokens => _database.GetCollection<TourPurchaseToken>("TourPurchaseTokens");
     }
 }

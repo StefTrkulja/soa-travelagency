@@ -48,6 +48,24 @@ const routes = [
     meta: { requiresAuth: true, role: ['Tourist'] }
   },
   { 
+    path: '/my-cart', 
+    name: 'MyCart', 
+    component: () => import('../views/MyCartView.vue'),
+    meta: { requiresAuth: true, role: ['Tourist'] }
+  },
+  { 
+    path: '/cart', 
+    name: 'Cart', 
+    component: () => import('../views/MyCartView.vue'),
+    meta: { requiresAuth: true, role: ['Tourist'] }
+  },
+  { 
+    path: '/purchases', 
+    name: 'Purchases', 
+    component: () => import('../views/PurchasesView.vue'),
+    meta: { requiresAuth: true, role: ['Tourist'] }
+  },
+  { 
     path: '/profile/:username', 
     name: 'Profile', 
     component: ProfileView,

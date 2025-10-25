@@ -95,6 +95,13 @@
           <v-card-text class="pa-4 pt-0">
             <!-- Description -->
             <p class="text-body-2 mb-3">{{ tour.description }}</p>
+            
+            <!-- Debug Info -->
+            <div class="mb-2 pa-2" style="background: #f5f5f5; font-size: 12px;">
+              <div>Current Role: {{ store.role }}</div>
+              <div>Tour Price: ${{ tour.price || 0 }}</div>
+              <div>Show Cart Button: {{ store.role === 'Tourist' }}</div>
+            </div>
 
             <!-- Tags -->
             <div v-if="tour.tags && tour.tags.length > 0" class="mb-3">
@@ -178,7 +185,7 @@
                   View Details
                 </v-btn>
               </v-col>
-              <v-col cols="12" v-if="store.role === 'Tourist'">
+              <v-col cols="6" v-if="store.role === 'Tourist'" class="pr-1">
                 <v-btn
                   variant="outlined"
                   color="success"
@@ -188,6 +195,19 @@
                   size="small"
                 >
                   Add Review
+                </v-btn>
+              </v-col>
+              <v-col cols="6" v-if="store.role === 'Tourist'" class="pl-1">
+                <v-btn
+                  variant="outlined"
+                  color="orange"
+                  prepend-icon="mdi-cart-plus"
+                  @click.stop="addToCart(tour)"
+                  block
+                  size="small"
+                  :loading="addingToCart === tour.id"
+                >
+                  Add to Cart
                 </v-btn>
               </v-col>
             </v-row>
@@ -327,7 +347,8 @@ export default {
         { text: '3 Stars - Good', value: 3 },
         { text: '4 Stars - Very Good', value: 4 },
         { text: '5 Stars - Excellent', value: 5 }
-      ]
+      ],
+      addingToCart: null
     };
   },
   methods: {
@@ -432,6 +453,42 @@ export default {
         return payload.id;
       } catch (error) {
         throw new Error('Invalid token format');
+      }
+    },
+    async addToCart(tour) {
+      console.log('addToCart called with tour:', tour);
+      console.log('Current role:', this.store.role);
+      
+      this.addingToCart = tour.id;
+      this.errorMessage = '';
+      this.successMessage = '';
+
+      try {
+        const orderItem = {
+          TourId: tour.id.toString(),
+          TourName: tour.name,
+          TourPrice: tour.price || 99.99
+        };
+
+        console.log('Sending order item:', orderItem);
+        const response = await axios.post('/cart/add-item', orderItem);
+        console.log('Cart response:', response);
+        this.successMessage = `${tour.name} has been added to your cart!`;
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+          this.successMessage = '';
+        }, 3000);
+      } catch (error) {
+        console.error('Error adding to cart:', error);
+        this.errorMessage = error.response?.data?.message || error.message || 'Failed to add item to cart.';
+        
+        // Clear error message after 5 seconds
+        setTimeout(() => {
+          this.errorMessage = '';
+        }, 5000);
+      } finally {
+        this.addingToCart = null;
       }
     }
   },

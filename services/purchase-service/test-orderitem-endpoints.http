@@ -1,0 +1,64 @@
+### Test OrderItem API Endpoints
+
+### Create a new OrderItem
+POST http://localhost:5002/api/orderitems
+Content-Type: application/json
+
+{
+  "tourName": "Amazing Paris Tour",
+  "tourPrice": 299.99,
+  "tourId": "tour123",
+  "shoppingCartId": "cart456"
+}
+
+### Get all OrderItems
+GET http://localhost:5002/api/orderitems
+
+### Get OrderItem by ID (replace with actual ID from create response)
+GET http://localhost:5002/api/orderitems/{{orderItemId}}
+
+### Get OrderItems by Shopping Cart ID
+GET http://localhost:5002/api/orderitems/shopping-cart/cart456
+
+### Get OrderItems count by Shopping Cart ID
+GET http://localhost:5002/api/orderitems/shopping-cart/cart456/count
+
+### Get total price by Shopping Cart ID
+GET http://localhost:5002/api/orderitems/shopping-cart/cart456/total
+
+### Update OrderItem (replace with actual ID)
+PUT http://localhost:5002/api/orderitems/{{orderItemId}}
+Content-Type: application/json
+
+{
+  "tourName": "Updated Amazing Paris Tour",
+  "tourPrice": 349.99
+}
+
+### Delete OrderItem (replace with actual ID)
+DELETE http://localhost:5002/api/orderitems/{{orderItemId}}
+
+### Delete all OrderItems for Shopping Cart
+DELETE http://localhost:5002/api/orderitems/shopping-cart/cart456
+
+### Create multiple OrderItems for testing
+POST http://localhost:5002/api/orderitems
+Content-Type: application/json
+
+{
+  "tourName": "London City Tour",
+  "tourPrice": 199.99,
+  "tourId": "tour124",
+  "shoppingCartId": "cart456"
+}
+
+###
+POST http://localhost:5002/api/orderitems
+Content-Type: application/json
+
+{
+  "tourName": "Rome Historical Tour",
+  "tourPrice": 259.99,
+  "tourId": "tour125",
+  "shoppingCartId": "cart456"
+}
