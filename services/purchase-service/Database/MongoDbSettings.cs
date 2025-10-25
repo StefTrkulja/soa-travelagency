@@ -5,5 +5,7 @@ namespace PurchaseService.Database
         public string ConnectionString { get; set; } = null!;
         public string DatabaseName { get; set; } = null!;
         public string PurchasesCollectionName { get; set; } = null!;
+        public string OrderItemsCollectionName { get; set; } = null!;
+        public string ShoppingCartsCollectionName { get; set; } = null!;
     }
 }
